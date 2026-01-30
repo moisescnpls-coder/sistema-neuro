@@ -1,0 +1,156 @@
+[
+  {
+    "id": 1,
+    "patientId": 1,
+    "patientName": "Moises Coutinho",
+    "date": "2026-01-13",
+    "time": "09:00",
+    "type": "Consulta Inicial",
+    "notes": "",
+    "status": "Cancelado",
+    "history": "[]"
+  },
+  {
+    "id": 2,
+    "patientId": 1,
+    "patientName": "Moises Coutinho",
+    "date": "2026-01-13",
+    "time": "09:00",
+    "type": "Consulta Inicial",
+    "notes": "",
+    "status": "Completado",
+    "history": "[]"
+  },
+  {
+    "id": 3,
+    "patientId": 1,
+    "patientName": "Moises Coutinho",
+    "date": "2026-01-13",
+    "time": "09:00",
+    "type": "Consulta Inicial",
+    "notes": "",
+    "status": "Completado",
+    "history": "[]"
+  },
+  {
+    "id": 4,
+    "patientId": 1,
+    "patientName": "Moises Coutinho",
+    "date": "2026-01-13",
+    "time": "09:00",
+    "type": "Consulta Inicial",
+    "notes": "",
+    "status": "Completado",
+    "history": "[]"
+  },
+  {
+    "id": 5,
+    "patientId": 1,
+    "patientName": "Moises Coutinho",
+    "date": "2026-01-13",
+    "time": "14:00",
+    "type": "Consulta Inicial",
+    "notes": "",
+    "status": "Completado",
+    "history": "[]"
+  },
+  {
+    "id": 6,
+    "patientId": 1,
+    "patientName": "Moises Coutinho",
+    "date": "2026-01-14",
+    "time": "09:00",
+    "type": "Retorno (Seguimiento)",
+    "notes": "",
+    "status": "Completado",
+    "history": "[]"
+  },
+  {
+    "id": 7,
+    "patientId": 1,
+    "patientName": "Moises Coutinho",
+    "date": "2026-01-13",
+    "time": "19:00",
+    "type": "Retorno (Seguimiento)",
+    "notes": "Prueba",
+    "status": "Completado",
+    "history": "[{\"date\":\"2026-01-13T21:24:39.118Z\",\"action\":\"Reprogramado\",\"from\":\"2026-01-13 18:00\",\"to\":\"2026-01-13 19:00\"}]"
+  },
+  {
+    "id": 8,
+    "patientId": 1,
+    "patientName": "Moises Coutinho",
+    "date": "2026-01-14",
+    "time": "09:00",
+    "type": "Consulta Inicial",
+    "notes": "Dor de cabeca",
+    "status": "Completado",
+    "history": "[]"
+  },
+  {
+    "id": 9,
+    "patientId": 1,
+    "patientName": "MOISES COUTINHO",
+    "date": "2026-01-15",
+    "time": "09:00",
+    "type": "Consulta Inicial",
+    "notes": "",
+    "status": "Cancelado",
+    "history": "[]"
+  },
+  {
+    "id": 10,
+    "patientId": 1,
+    "patientName": "MOISES COUTINHO",
+    "date": "2026-01-15",
+    "time": "09:00",
+    "type": "Consulta Inicial",
+    "notes": "",
+    "status": "Completado",
+    "history": "[]"
+  },
+  {
+    "id": 11,
+    "patientId": 33,
+    "patientName": null,
+    "date": "2026-01-16",
+    "time": "11:00",
+    "type": "Procedimiento",
+    "notes": "Dolor de cabeza",
+    "status": "Programado",
+    "history": "[]"
+  },
+  {
+    "id": 12,
+    "patientId": 1,
+    "patientName": "MOISES COUTINHO",
+    "date": "2026-01-16",
+    "time": "14:00",
+    "type": "Lectura de Examenes",
+    "notes": "",
+    "status": "Programado",
+    "history": "[]"
+  },
+  {
+    "id": 13,
+    "patientId": 1,
+    "patientName": "MOISES COUTINHO",
+    "date": "2026-01-16",
+    "time": "12:00",
+    "type": "Procedimiento",
+    "notes": "Dor de cabeza",
+    "status": "Programado",
+    "history": "[]"
+  },
+  {
+    "id": 14,
+    "patientId": 1,
+    "patientName": "COUTINHO MOISES",
+    "date": "2026-01-14",
+    "time": "09:00",
+    "type": "Consulta Inicial",
+    "notes": "fgh",
+    "status": "Programado",
+    "history": "[]"
+  }
+]

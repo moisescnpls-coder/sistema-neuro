@@ -1,0 +1,163 @@
+Searching for name containing "VILLEGAS" or DNI "75674384"...
+
+Rows found: 20
+------------------------------------------------
+ID: 596
+Full Name: VILLEGAS RUIZ WILLIAMS TACHINI
+First Name: 
+Last Name: VILLEGAS RUIZ WILLIAMS TACHINI
+DNI: 75674384
+HC (clinicalHistoryNumber): 20664
+------------------------------------------------
+------------------------------------------------
+ID: 1945
+Full Name: VILLEGAS PARDO VANESSA
+First Name: 
+Last Name: VILLEGAS PARDO VANESSA
+DNI: null
+HC (clinicalHistoryNumber): 9211
+------------------------------------------------
+------------------------------------------------
+ID: 2539
+Full Name: VILLEGAS SALVADOR ALDAIR
+First Name: 
+Last Name: VILLEGAS SALVADOR ALDAIR
+DNI: null
+HC (clinicalHistoryNumber): 10263
+------------------------------------------------
+------------------------------------------------
+ID: 2670
+Full Name: VILLEGAS RAMOS LUCILA
+First Name: 
+Last Name: VILLEGAS RAMOS LUCILA
+DNI: null
+HC (clinicalHistoryNumber): 10380
+------------------------------------------------
+------------------------------------------------
+ID: 3715
+Full Name: MENODZA VILLEGAS PEDRO
+First Name: 
+Last Name: MENODZA VILLEGAS PEDRO
+DNI: null
+HC (clinicalHistoryNumber): 11394
+------------------------------------------------
+------------------------------------------------
+ID: 4441
+Full Name: RODRIGUEZ VILLEGAS ELVIRA
+First Name: 
+Last Name: RODRIGUEZ VILLEGAS ELVIRA
+DNI: null
+HC (clinicalHistoryNumber): 12125
+------------------------------------------------
+------------------------------------------------
+ID: 4644
+Full Name: ALFARO VILLEGAS JULIA NILA
+First Name: 
+Last Name: ALFARO VILLEGAS JULIA NILA
+DNI: null
+HC (clinicalHistoryNumber): 12330
+------------------------------------------------
+------------------------------------------------
+ID: 4681
+Full Name: LOPEZ VILLEGAS JULIA ROSA
+First Name: 
+Last Name: LOPEZ VILLEGAS JULIA ROSA
+DNI: null
+HC (clinicalHistoryNumber): 12371
+------------------------------------------------
+------------------------------------------------
+ID: 6094
+Full Name: PORTURAS VILLEGAS IRMA
+First Name: 
+Last Name: PORTURAS VILLEGAS IRMA
+DNI: null
+HC (clinicalHistoryNumber): 13926
+------------------------------------------------
+------------------------------------------------
+ID: 6652
+Full Name: ALFARO VILLEGAS ENRIQUE ANTENOR
+First Name: 
+Last Name: ALFARO VILLEGAS ENRIQUE ANTENOR
+DNI: null
+HC (clinicalHistoryNumber): 14488
+------------------------------------------------
+------------------------------------------------
+ID: 6701
+Full Name: VILLEGAS VALLEJOS WILDER ALFREDO
+First Name: 
+Last Name: VILLEGAS VALLEJOS WILDER ALFREDO
+DNI: null
+HC (clinicalHistoryNumber): 14533
+------------------------------------------------
+------------------------------------------------
+ID: 7926
+Full Name: ALFARO VILLEGAS FLOR
+First Name: 
+Last Name: ALFARO VILLEGAS FLOR
+DNI: null
+HC (clinicalHistoryNumber): 15779
+------------------------------------------------
+------------------------------------------------
+ID: 8653
+Full Name: VILLEGAS CHAVEZ WALTER
+First Name: 
+Last Name: VILLEGAS CHAVEZ WALTER
+DNI: null
+HC (clinicalHistoryNumber): 16509
+------------------------------------------------
+------------------------------------------------
+ID: 8774
+Full Name: CHUMAN BOADO DE VILLEGAS LIVIA
+First Name: 
+Last Name: CHUMAN BOADO DE VILLEGAS LIVIA
+DNI: null
+HC (clinicalHistoryNumber): 16638
+------------------------------------------------
+------------------------------------------------
+ID: 8831
+Full Name: COLOMA VILLEGAS CARLOS
+First Name: 
+Last Name: COLOMA VILLEGAS CARLOS
+DNI: null
+HC (clinicalHistoryNumber): 16690
+------------------------------------------------
+------------------------------------------------
+ID: 9793
+Full Name: VILLEGAS ARRIETA MARIA LUZ
+First Name: 
+Last Name: VILLEGAS ARRIETA MARIA LUZ
+DNI: null
+HC (clinicalHistoryNumber): 17699
+------------------------------------------------
+------------------------------------------------
+ID: 9820
+Full Name: VILLEGAS CASTILLO FELIPE
+First Name: 
+Last Name: VILLEGAS CASTILLO FELIPE
+DNI: null
+HC (clinicalHistoryNumber): 17735
+------------------------------------------------
+------------------------------------------------
+ID: 10051
+Full Name: VILLEGAS ZAVALA LEONOR
+First Name: 
+Last Name: VILLEGAS ZAVALA LEONOR
+DNI: null
+HC (clinicalHistoryNumber): 7019
+------------------------------------------------
+------------------------------------------------
+ID: 11699
+Full Name: MESONES VILLEGAS SONIA MAGALI
+First Name: 
+Last Name: MESONES VILLEGAS SONIA MAGALI
+DNI: null
+HC (clinicalHistoryNumber): 2439
+------------------------------------------------
+------------------------------------------------
+ID: 13689
+Full Name: VILLEGAS BELTRAN ROMINA
+First Name: 
+Last Name: VILLEGAS BELTRAN ROMINA
+DNI: null
+HC (clinicalHistoryNumber): 8266
+------------------------------------------------

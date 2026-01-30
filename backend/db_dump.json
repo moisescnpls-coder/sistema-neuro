@@ -1,0 +1,159 @@
+{
+  "roles": [
+    {
+      "role": "admin"
+    },
+    {
+      "role": "medico"
+    },
+    {
+      "role": "recepcion"
+    }
+  ],
+  "role_permissions": [
+    {
+      "role": "admin",
+      "permission_key": "manage_users"
+    },
+    {
+      "role": "admin",
+      "permission_key": "delete_patients"
+    },
+    {
+      "role": "admin",
+      "permission_key": "delete_appointments"
+    },
+    {
+      "role": "admin",
+      "permission_key": "manage_permissions"
+    },
+    {
+      "role": "admin",
+      "permission_key": "view_reports"
+    },
+    {
+      "role": "medico",
+      "permission_key": "view_reports"
+    },
+    {
+      "role": "medico",
+      "permission_key": "delete_patients"
+    },
+    {
+      "role": "medico",
+      "permission_key": "delete_appointments"
+    },
+    {
+      "role": "admin",
+      "permission_key": "delete_history_appointments"
+    },
+    {
+      "role": "medico",
+      "permission_key": "delete_history_appointments"
+    },
+    {
+      "role": "admin",
+      "permission_key": "delete_prescriptions"
+    },
+    {
+      "role": "admin",
+      "permission_key": "delete_exams"
+    },
+    {
+      "role": "admin",
+      "permission_key": "edit_clinical"
+    },
+    {
+      "role": "medico",
+      "permission_key": "delete_prescriptions"
+    },
+    {
+      "role": "medico",
+      "permission_key": "delete_exams"
+    },
+    {
+      "role": "medico",
+      "permission_key": "edit_clinical"
+    },
+    {
+      "role": "admin",
+      "permission_key": "manage_backup"
+    },
+    {
+      "role": "admin",
+      "permission_key": "view_logs"
+    },
+    {
+      "role": "admin",
+      "permission_key": "view_dashboard_stats"
+    },
+    {
+      "role": "medico",
+      "permission_key": "manage_users"
+    },
+    {
+      "role": "medico",
+      "permission_key": "view_dashboard_stats"
+    },
+    {
+      "role": "recepcion",
+      "permission_key": "view_patients"
+    },
+    {
+      "role": "recepcion",
+      "permission_key": "create_patient"
+    },
+    {
+      "role": "recepcion",
+      "permission_key": "edit_patient"
+    },
+    {
+      "role": "recepcion",
+      "permission_key": "delete_appointments"
+    },
+    {
+      "role": "medico",
+      "permission_key": "view_patients"
+    },
+    {
+      "role": "medico",
+      "permission_key": "create_patient"
+    },
+    {
+      "role": "medico",
+      "permission_key": "edit_patient"
+    },
+    {
+      "role": "medico",
+      "permission_key": "view_clinical"
+    },
+    {
+      "role": "medico",
+      "permission_key": "manage_documents"
+    },
+    {
+      "role": "recepcion",
+      "permission_key": "delete_patients"
+    },
+    {
+      "role": "recepcion",
+      "permission_key": "manage_users"
+    },
+    {
+      "role": "recepcion",
+      "permission_key": "view_dashboard_stats"
+    },
+    {
+      "role": "admin",
+      "permission_key": "view_clinical"
+    },
+    {
+      "role": "admin",
+      "permission_key": "access_attention"
+    },
+    {
+      "role": "medico",
+      "permission_key": "access_attention"
+    }
+  ]
+}

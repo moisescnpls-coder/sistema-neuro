@@ -1,0 +1,21 @@
+Searching for name containing "ALEMAN RUJEL GRACIELA"...
+
+Rows found: 2
+------------------------------------------------
+ID: 686
+Full Name: ALEMAN RUJEL GRACIELA
+First Name: 
+Last Name: ALEMAN RUJEL GRACIELA
+DNI: null
+HC: 7093
+Reg Date: 2005-01-28
+------------------------------------------------
+------------------------------------------------
+ID: 13710
+Full Name: ALEMAN RUJEL GRACIELA
+First Name: 
+Last Name: ALEMAN RUJEL GRACIELA
+DNI: null
+HC: 6568
+Reg Date: 2005-01-26
+------------------------------------------------
