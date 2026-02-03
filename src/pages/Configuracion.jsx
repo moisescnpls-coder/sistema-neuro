@@ -32,7 +32,7 @@ const Configuracion = () => {
             const data = await dataService.getSettings();
             setSettings(data);
             if (data.logoUrl) {
-                setLogoPreview(`http://127.0.0.1:5000/${data.logoUrl}`);
+                setLogoPreview(`http://127.0.0.1:3001/${data.logoUrl}`);
             }
         } catch (error) {
             console.error('Error loading settings:', error);
@@ -76,7 +76,7 @@ const Configuracion = () => {
             const updated = await dataService.saveSettings(formData);
             setSettings(updated);
             if (updated.logoUrl) {
-                setLogoPreview(`http://127.0.0.1:5000/${updated.logoUrl}`);
+                setLogoPreview(`http://127.0.0.1:3001/${updated.logoUrl}`);
             }
             showAlert('Configuración guardada correctamente', 'success');
         } catch (error) {

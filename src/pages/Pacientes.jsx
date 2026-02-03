@@ -140,6 +140,11 @@ const Pacientes = () => {
         }
     }, [currentPatient.province]);
 
+    // Reset pagination when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filters]);
+
 
 
     const handleBirthDateChange = (e) => {
@@ -257,7 +262,10 @@ const Pacientes = () => {
         // Name filter (firstName + lastName)
         if (filters.name) {
             const fullName = `${patient.firstName || ''} ${patient.lastName || ''}`.toLowerCase();
-            if (!fullName.includes(filters.name.toLowerCase())) return false;
+            const searchTerms = filters.name.toLowerCase().split(/\s+/).filter(term => term.length > 0);
+            const matchesAllTerms = searchTerms.every(term => fullName.includes(term));
+
+            if (!matchesAllTerms) return false;
         }
 
         // Document filter (DNI)

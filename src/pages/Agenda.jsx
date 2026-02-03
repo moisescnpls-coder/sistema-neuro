@@ -321,18 +321,23 @@ const Agenda = () => {
     const filteredPatients = React.useMemo(() => {
         if (!searchTerm || searchTerm.length < 2) return []; // Require at least 2 chars
 
-        const term = searchTerm.toLowerCase();
-        const results = patients.filter(p => {
-            const display = p.fullName || (p.firstName ? `${p.firstName} ${p.lastName}` : '') || '';
+        const searchTerms = searchTerm.toLowerCase().split(/\s+/).filter(t => t.length > 0);
 
-            return (
-                display.toLowerCase().includes(term) ||
-                (p.firstName && p.firstName.toLowerCase().includes(term)) ||
-                (p.lastName && p.lastName.toLowerCase().includes(term)) ||
-                (p.dni && p.dni.includes(term)) ||
-                (p.clinicalHistoryNumber && p.clinicalHistoryNumber.includes(term)) ||
-                (p.phone && p.phone.includes(term))
-            );
+        const results = patients.filter(p => {
+            const fullName = (p.fullName || (p.firstName ? `${p.firstName} ${p.lastName}` : '') || '').toLowerCase();
+            const dni = (p.dni || '').toLowerCase();
+            const hc = (p.clinicalHistoryNumber || '').toLowerCase();
+            const phone = (p.phone || '').toLowerCase();
+
+            // Check if ALL search terms are present in ANY of the fields (combined context)
+            // Or simpler: Check if EVERY term exists in at least ONE of the meaningful fields.
+            // Actually, for "Lopez Caballero", we want "Lopez" and "Caballero" to be found. 
+            // "Lopez" might be in lastName, "Caballero" in firstName (if that were the case). 
+            // The safest is to check against a combined string of all searchable text.
+
+            const searchableText = `${fullName} ${dni} ${hc} ${phone}`;
+
+            return searchTerms.every(term => searchableText.includes(term));
         });
 
         // Limit to 20 results for performance

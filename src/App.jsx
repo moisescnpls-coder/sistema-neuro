@@ -57,22 +57,22 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path="/agenda" element={
-            <ProtectedRoute>
+            <ProtectedRoute permissionKey="view_agenda_patients">
               <MainLayout><Agenda /></MainLayout>
             </ProtectedRoute>
           } />
           <Route path="/pacientes" element={
-            <ProtectedRoute>
+            <ProtectedRoute permissionKey="view_agenda_patients">
               <MainLayout><Pacientes /></MainLayout>
             </ProtectedRoute>
           } />
           <Route path="/pacientes/:id" element={
-            <ProtectedRoute>
+            <ProtectedRoute permissionKey="view_agenda_patients">
               <MainLayout><PacienteDetalles /></MainLayout>
             </ProtectedRoute>
           } />
           <Route path="/medicos" element={
-            <ProtectedRoute>
+            <ProtectedRoute permissionKey="view_doctors">
               <MainLayout><Medicos /></MainLayout>
             </ProtectedRoute>
           } />

@@ -52,9 +52,27 @@ Se ficar "carregando infinitamente" ou der erro:
 1.  **Firewall do Windows (No Servidor)**:
     - O Windows pode estar bloqueando.
     - Teste rápido: Desative o firewall temporariamente para testar.
-    - Solução correta: Adicione uma "Regra de Entrada" no Firewall permitindo a porta `5173` e `5000` (Backend).
+    - Solução correta: Adicione uma "Regra de Entrada" no Firewall permitindo a porta `5173` e `3001` (Backend).
 2.  **Mesma Rede**:
     - Os dois computadores PRECISAM estar no mesmo Wi-Fi ou cabo de rede.
 
 ### Dica de Ouro para Produção
 Para evitar que o IP mude todo dia (o que faria o Computador 2 perder a conexão), configure um **IP Fixo** no Computador Servidor nas configurações de rede do Windows.
+61: 
+62: ## Parte 3: Diagnóstico Avançado de Portas (Caso o Backend pare de funcionar)
+63: 
+64: Se o Backend (janela preta) fechar sozinho com erro `EACCES` ou "Permission Denied", o Windows pode ter bloqueado a porta. Siga estes passos para descobrir o porquê:
+65: 
+66: 1.  Abra o **PowerShell** como Administrador.
+67: 2.  **Verificar processos ocupando a porta**:
+68:     ```powershell
+69:     netstat -ano | findstr :3001
+70:     ```
+71:     *Se aparecer algo, anote o número final (PID) e use `taskkill /F /PID <Numero>` para matar o processo.*
+72: 
+73: 3.  **Verificar se o Windows reservou a porta (Hyper-V/Docker)**:
+74:     O Windows às vezes "sequestra" portas para uso interno. Rode este comando:
+75:     ```powershell
+76:     netsh interface ipv4 show excludedportrange protocol=tcp
+77:     ```
+78:     *Se a porta 3001 (ou 5000) estiver dentro de um "Intervalo de Exclusão", você não poderá usá-la. A solução é mudar a porta no sistema (como fizemos hoje) ou reiniciar o serviço "WinNAT" (`net stop winnat` depois `net start winnat`).*

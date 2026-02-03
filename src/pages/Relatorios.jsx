@@ -3,6 +3,7 @@ import { FileBarChart, Download, Calendar, Users, Activity, Filter, Printer, Che
 import { useAuth } from '../context/AuthContext';
 import { dataService } from '../services/data';
 import { ubigeoService } from '../services/ubigeo';
+import { showAlert } from '../utils/alerts';
 
 import { useLocation } from 'react-router-dom';
 
@@ -31,13 +32,11 @@ const Relatorios = () => {
             setActiveReport(location.state.activeReport);
             if (location.state.filters) {
                 setFilters(prev => ({ ...prev, ...location.state.filters }));
-                // Optional: Auto-generate logic could go here or user clicks manually
             }
         }
-    }, [location.state]); // Depend on location.state
+    }, [location.state]);
 
-    const API_HOST = `http://${window.location.hostname}:5000`;
-
+    const API_HOST = `http://${window.location.hostname}:3001`;
     const departments = ubigeoService.getDepartments();
 
     if (!isAdmin && !hasPermission('view_reports')) {
@@ -86,8 +85,6 @@ const Relatorios = () => {
 
     const handleGenerate = async () => {
         if (!activeReport) return;
-
-        // Validation: Date Range is required
         if (!filters.startDate || !filters.endDate) {
             setError('Por favor, selecciona un rango de fechas (Desde y Hasta) para generar el reporte.');
             return;
@@ -98,8 +95,13 @@ const Relatorios = () => {
         try {
             const cleanFilters = Object.fromEntries(Object.entries(filters).filter(([_, v]) => v !== ''));
             const data = await dataService.getReport(activeReport, cleanFilters);
-            setResults(data);
-            if (window.innerWidth < 768) setIsFilterOpen(false); // Auto close on mobile
+            setResults(data || []);
+
+            if (!data || data.length === 0) {
+                showAlert('No se encontraron datos para el período o filtros seleccionados.', 'info');
+            }
+
+            if (window.innerWidth < 768) setIsFilterOpen(false);
         } catch (err) {
             setError(err.message);
             setResults([]);
@@ -157,18 +159,15 @@ const Relatorios = () => {
                             style={{ padding: '20px' }}
                         >
                             <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${report.color} opacity-10 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-150`}></div>
-
                             <div className={`mb-6 inline-flex p-4 rounded-2xl ${report.bg} ${report.text} shadow-inner`}>
                                 {report.icon}
                             </div>
-
                             <h3 className="text-xl font-bold text-slate-800 mb-3 group-hover:text-blue-600 transition-colors">
                                 {report.title}
                             </h3>
                             <p className="text-slate-500 leading-relaxed mb-6">
                                 {report.desc}
                             </p>
-
                             <div className="flex items-center text-sm font-semibold text-slate-400 group-hover:text-blue-600 transition-colors">
                                 Explorar Datos <ChevronRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
                             </div>
@@ -177,8 +176,6 @@ const Relatorios = () => {
                 </div>
             ) : (
                 <div className="animate-slide-up">
-                    {/* Active Report Header */}
-                    {/* Active Report Header */}
                     <div className="flex items-center justify-between mb-8 print:hidden" style={{ marginBottom: '10px' }}>
                         <button
                             onClick={() => setActiveReport(null)}
@@ -188,9 +185,15 @@ const Relatorios = () => {
                         </button>
                         <div className="flex gap-3">
                             <button
-                                onClick={() => window.print()}
+                                onClick={() => {
+                                    if (results.length === 0) {
+                                        showAlert('Primero genere un informe con resultados para poder imprimir.', 'warning');
+                                        return;
+                                    }
+                                    window.print();
+                                }}
                                 style={{
-                                    backgroundColor: '#4f46e5', // Indigo
+                                    backgroundColor: '#4f46e5',
                                     color: '#ffffff',
                                     padding: '10px 20px',
                                     borderRadius: '10px',
@@ -210,7 +213,7 @@ const Relatorios = () => {
                                 onClick={handleDownloadCSV}
                                 disabled={results.length === 0}
                                 style={{
-                                    backgroundColor: '#10b981', // Emerald
+                                    backgroundColor: '#10b981',
                                     color: '#ffffff',
                                     padding: '10px 20px',
                                     borderRadius: '10px',
@@ -255,7 +258,6 @@ const Relatorios = () => {
                                                 <input
                                                     type="date"
                                                     className="w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none text-sm mt-1"
-                                                    style={{ paddingLeft: '5px', paddingRight: '5px' }}
                                                     value={filters.startDate}
                                                     onChange={e => setFilters({ ...filters, startDate: e.target.value })}
                                                 />
@@ -265,7 +267,6 @@ const Relatorios = () => {
                                                 <input
                                                     type="date"
                                                     className="w-full h-11 px-3 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none text-sm"
-                                                    style={{ paddingLeft: '5px', paddingRight: '5px' }}
                                                     value={filters.endDate}
                                                     onChange={e => setFilters({ ...filters, endDate: e.target.value })}
                                                 />
@@ -279,7 +280,6 @@ const Relatorios = () => {
                                                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Demografía</label>
                                                 <select
                                                     className="w-full h-11 px-4 rounded-lg border border-slate-200 bg-white text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm appearance-none mt-2"
-                                                    style={{ paddingLeft: '10px', paddingRight: '10px' }}
                                                     value={filters.gender}
                                                     onChange={e => setFilters({ ...filters, gender: e.target.value })}
                                                 >
@@ -289,7 +289,6 @@ const Relatorios = () => {
                                                 </select>
                                                 <select
                                                     className="w-full h-11 px-3 mt-2 rounded-lg border border-slate-200 bg-white text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm appearance-none"
-                                                    style={{ paddingLeft: '10px', paddingRight: '10px', marginTop: '20px' }}
                                                     value={filters.department}
                                                     onChange={e => setFilters({ ...filters, department: e.target.value })}
                                                 >
@@ -306,7 +305,6 @@ const Relatorios = () => {
                                                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Estado</label>
                                                 <select
                                                     className="w-full h-11 px-3 rounded-lg border border-slate-200 bg-white text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm appearance-none"
-                                                    style={{ paddingLeft: '10px', paddingRight: '10px' }}
                                                     value={filters.status}
                                                     onChange={e => setFilters({ ...filters, status: e.target.value })}
                                                 >
@@ -363,137 +361,233 @@ const Relatorios = () => {
 
                         {/* Main Content Area */}
                         <div className="flex-1">
+                            <style>
+                                {`
+                                    @media print {
+                                        @page { 
+                                            size: A4 portrait; 
+                                            margin: 20mm 15mm 20mm 15mm !important; 
+                                        }
+                                        
+                                        html, body { 
+                                            background: white !important; 
+                                            margin: 0 !important; 
+                                            padding: 0 !important;
+                                        }
 
-                            {/* PRINT ONLY HEADER - Visible only when printing */}
-                            <div className="hidden print:block mb-8 border-b-2 border-slate-800 pb-4">
-                                <div className="flex justify-between items-end mb-4">
-                                    <div className="flex items-center gap-4">
-                                        {settings?.logoUrl && (
-                                            <img
-                                                src={`${API_HOST}/${settings.logoUrl}`}
-                                                alt="Logo"
-                                                className="h-16 w-auto object-contain"
-                                            />
-                                        )}
-                                        <div>
-                                            <h1 className="text-2xl font-bold text-slate-900">
-                                                {settings?.nombreComercial || 'NEUROCENTER BOLIVAR'}
-                                            </h1>
-                                            <p className="text-sm text-slate-600">
-                                                {settings?.direccion || 'Sistema de Gestión Médica'}
-                                            </p>
+                                        .main-content { 
+                                            margin: 0 !important; 
+                                            padding: 0 !important; 
+                                            display: block !important;
+                                        }
+
+                                        .report-print-wrapper {
+                                            padding: 10mm !important;
+                                            width: 100% !important;
+                                        }
+
+                                        .sidebar, .print\\:hidden, button, .nav-item, .Toastify { 
+                                            display: none !important; 
+                                        }
+
+                                        table { 
+                                            width: 100% !important; 
+                                            border-collapse: separate !important; 
+                                            border-spacing: 0 !important;
+                                            margin-top: 10mm !important;
+                                            border: 1px solid #e2e8f0 !important;
+                                            border-radius: 12px !important;
+                                            overflow: hidden !important;
+                                        }
+
+                                        thead { display: table-header-group !important; }
+                                        tr { page-break-inside: avoid !important; }
+                                        
+                                        th, td { 
+                                            border: none !important;
+                                            border-bottom: 1px solid #f1f5f9 !important;
+                                            padding: 4mm 3mm !important; 
+                                            color: #334155 !important;
+                                            font-size: 10pt !important;
+                                            text-align: left !important;
+                                        }
+
+                                        tr:last-child td { border-bottom: none !important; }
+
+                                        tr:nth-child(even) {
+                                            background-color: #f8fafc !important;
+                                        }
+
+                                        th { 
+                                            background-color: #f1f5f9 !important; 
+                                            font-weight: 800 !important;
+                                            text-transform: uppercase !important;
+                                            color: #475569 !important;
+                                            font-size: 8.5pt !important;
+                                            letter-spacing: 0.05em !important;
+                                        }
+
+                                        .print-header { 
+                                            display: block !important; 
+                                            border-bottom: 2pt solid #000 !important; 
+                                            padding-bottom: 5mm !important; 
+                                            margin-bottom: 5mm !important; 
+                                        }
+
+                                        .status-badge-print {
+                                            display: inline-block !important;
+                                            background-color: #f1f5f9 !important;
+                                            color: #475569 !important;
+                                            border-radius: 20px !important;
+                                            padding: 1.5mm 4mm !important;
+                                            font-size: 8pt !important;
+                                            font-weight: 800 !important;
+                                            text-transform: uppercase !important;
+                                            letter-spacing: 0.05em !important;
+                                            border: 1px solid #e2e8f0 !important;
+                                        }
+                                    }
+                                `}
+                            </style>
+
+                            <div className="flex-1 report-print-wrapper">
+                                <div className="hidden print:block print-header">
+                                    <div className="flex justify-between items-start mb-6">
+                                        <div className="flex items-center gap-4">
+                                            {settings?.logoUrl && (
+                                                <img
+                                                    src={`${API_HOST}/${settings.logoUrl}`}
+                                                    alt="Logo"
+                                                    className="h-16 w-auto object-contain"
+                                                />
+                                            )}
+                                            <div>
+                                                <h1 style={{ fontSize: '20px', color: '#000', margin: 0 }}>
+                                                    {settings?.nombreComercial || 'NEUROCENTER BOLIVAR'}
+                                                </h1>
+                                                <p style={{ fontSize: '13px', color: '#333', margin: '4px 0 0 0' }}>
+                                                    {settings?.direccion || 'Sistema de Gestión Médica'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p style={{ fontSize: '11px', color: '#666', margin: 0 }}>Fecha de Impresión:</p>
+                                            <p style={{ fontSize: '13px', fontWeight: 'bold', margin: '2px 0 0 0' }}>{new Date().toLocaleString()}</p>
+                                            {settings?.ruc && <p style={{ fontSize: '11px', color: '#666', margin: '4px 0 0 0' }}>RUC: {settings.ruc}</p>}
                                         </div>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="text-xs text-slate-500">Fecha de Impresión:</p>
-                                        <p className="font-mono text-sm font-bold">{new Date().toLocaleString()}</p>
-                                        {settings?.ruc && <p className="text-xs text-slate-500 mt-1">RUC: {settings.ruc}</p>}
-                                    </div>
-                                </div>
-                                <div className="mt-6">
-                                    <h2 className="text-xl font-bold text-slate-800 uppercase tracking-wide">
-                                        REPORTE DE {reportTypes.find(r => r.id === activeReport).title.toUpperCase()}
-                                    </h2>
-                                    <p className="text-sm text-slate-600 mt-1">
-                                        Período: <span className="font-semibold">{filters.startDate}</span> al <span className="font-semibold">{filters.endDate}</span>
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* SCREEN ONLY HEADER - Hidden when printing */}
-                            <div className="print:hidden report-header-card bg-white rounded-2xl shadow-sm border border-slate-200 mb-8 flex flex-col md:flex-row items-start md:items-center gap-4" style={{ padding: '20px', marginBottom: '15px' }}>
-                                <div className={`report-header-icon p-3 rounded-xl ${reportTypes.find(r => r.id === activeReport).bg} ${reportTypes.find(r => r.id === activeReport).text}`}>
-                                    {reportTypes.find(r => r.id === activeReport).icon}
-                                </div>
-                                <div>
-                                    <h2 className="text-xl font-bold text-slate-800">{reportTypes.find(r => r.id === activeReport).title}</h2>
-                                    <p className="text-slate-500 text-sm">Visualizando datos filtrados</p>
-                                </div>
-                            </div>
-
-                            {error && (
-                                <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-lg flex items-center gap-3 text-red-700 animate-shake">
-                                    <Filter size={20} />
-                                    <span className="font-medium">{error}</span>
-                                </div>
-                            )}
-
-                            {/* Data Table */}
-                            <div className="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden min-h-[400px] overflow-x-auto print:shadow-none print:border-0 print:min-h-0">
-                                {results.length > 0 ? (
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-sm text-slate-600 print:text-black">
-                                            <thead className="bg-slate-50 border-b border-slate-200 print:bg-white print:border-b-2 print:border-black">
-                                                <tr>
-                                                    {activeReport === 'patients' && ['Paciente', 'HC', 'Documento', 'F. Registro', 'Teléfono', 'Ubicación'].map((h, i) => (
-                                                        <th key={h} style={{ paddingLeft: i === 0 ? '20px' : '' }} className="px-4 py-4 font-bold text-slate-700 text-left uppercase text-xs tracking-wider whitespace-nowrap">{h}</th>
-                                                    ))}
-                                                    {activeReport === 'appointments' && ['Paciente', 'Fecha', 'Hora', 'Tipo', 'Estado'].map((h, i) => (
-                                                        <th key={h} style={{ paddingLeft: i === 0 ? '20px' : '' }} className="px-4 py-4 font-bold text-slate-700 text-left uppercase text-xs tracking-wider whitespace-nowrap">{h}</th>
-                                                    ))}
-                                                    {activeReport === 'exams' && ['Paciente', 'Examen', 'Fecha', 'Doctor', 'Estado'].map((h, i) => (
-                                                        <th key={h} style={{ paddingLeft: i === 0 ? '20px' : '' }} className="px-4 py-4 font-bold text-slate-700 text-left uppercase text-xs tracking-wider whitespace-nowrap">{h}</th>
-                                                    ))}
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-slate-100">
-                                                {results.map((row, index) => (
-                                                    <tr key={index} className="hover:bg-blue-50/50 transition-colors">
-                                                        {activeReport === 'patients' && (
-                                                            <>
-                                                                <td style={{ paddingLeft: '20px' }} className="px-4 py-4 font-semibold text-slate-800 whitespace-nowrap">{row.fullName}</td>
-                                                                <td className="px-4 py-4 whitespace-nowrap"><span className="font-mono text-xs bg-slate-100 px-2 py-1 rounded text-slate-600">{row.clinicalHistoryNumber}</span></td>
-                                                                <td className="px-4 py-4 whitespace-nowrap">{row.dni}</td>
-                                                                <td className="px-4 py-4 whitespace-nowrap">{row.registrationDate}</td>
-                                                                <td className="px-4 py-4 text-xs whitespace-nowrap">{row.phone}</td>
-                                                                <td className="px-4 py-4 text-xs whitespace-nowrap">{row.department}/{row.province}</td>
-                                                            </>
-                                                        )}
-                                                        {activeReport === 'appointments' && (
-                                                            <>
-                                                                <td style={{ paddingLeft: '20px' }} className="px-6 py-4 font-semibold text-slate-800">{row.patientName}</td>
-                                                                <td className="px-6 py-4">{row.date}</td>
-                                                                <td className="px-6 py-4 font-mono text-xs">{row.time}</td>
-                                                                <td className="px-6 py-4"><span className="text-xs font-medium px-2 py-1 bg-indigo-50 text-indigo-700 rounded-md">{row.type}</span></td>
-                                                                <td className="px-6 py-4">
-                                                                    <StatusBadge status={row.status} />
-                                                                </td>
-                                                            </>
-                                                        )}
-                                                        {activeReport === 'exams' && (
-                                                            <>
-                                                                <td style={{ paddingLeft: '20px' }} className="px-6 py-4 font-semibold text-slate-800">{row.patientName || <span className="text-slate-400 italic">Desconocido</span>}</td>
-                                                                <td className="px-6 py-4 text-indigo-600 font-medium">{row.type}</td>
-                                                                <td className="px-6 py-4">{row.date}</td>
-                                                                <td className="px-6 py-4 text-xs">{row.doctorName || '-'}</td>
-                                                                <td className="px-6 py-4">
-                                                                    <StatusBadge status={row.status} />
-                                                                </td>
-                                                            </>
-                                                        )}
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                ) : (
-                                    <div className="flex flex-col items-center justify-center h-[400px] text-center p-8 bg-slate-50/50">
-                                        <div className="bg-white p-6 rounded-full shadow-sm mb-4">
-                                            <Search size={48} className="text-slate-300" />
-                                        </div>
-                                        <h3 className="text-xl font-bold text-slate-700 mb-2">Esperando Consulta</h3>
-                                        <p className="text-slate-500 max-w-sm">
-                                            Utilice el panel de configuración a la izquierda para seleccionar fechas y filtros, luego presione "Generar Informe".
+                                    <div className="mt-8">
+                                        <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#000', margin: 0, textAlign: 'center' }}>
+                                            REPORTE DE {reportTypes.find(r => r.id === activeReport)?.title.toUpperCase()}
+                                        </h2>
+                                        <p style={{ fontSize: '13px', color: '#444', margin: '8px 0 0 0', textAlign: 'center' }}>
+                                            Período: <strong>{filters.startDate}</strong> al <strong>{filters.endDate}</strong>
                                         </p>
                                     </div>
+                                </div>
+
+                                {/* SCREEN ONLY HEADER */}
+                                <div className="print:hidden report-header-card bg-white rounded-2xl shadow-sm border border-slate-200 mb-8 flex flex-col md:flex-row items-start md:items-center gap-4" style={{ padding: '20px', marginBottom: '15px' }}>
+                                    <div className={`report-header-icon p-3 rounded-xl ${reportTypes.find(r => r.id === activeReport)?.bg} ${reportTypes.find(r => r.id === activeReport)?.text}`}>
+                                        {reportTypes.find(r => r.id === activeReport)?.icon}
+                                    </div>
+                                    <div>
+                                        <h2 className="text-xl font-bold text-slate-800">{reportTypes.find(r => r.id === activeReport)?.title}</h2>
+                                        <p className="text-slate-500 text-sm">Visualizando datos filtrados</p>
+                                    </div>
+                                </div>
+
+                                {error && (
+                                    <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-lg flex items-center gap-3 text-red-700 animate-shake">
+                                        <Filter size={20} />
+                                        <span className="font-medium">{error}</span>
+                                    </div>
                                 )}
+
+                                <div className="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden min-h-[400px] overflow-x-auto print:shadow-none print:border-0 print:min-h-0">
+                                    {results.length > 0 ? (
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-sm text-slate-600 print:text-black">
+                                                <thead className="bg-slate-50 border-b border-slate-200 print:bg-white print:border-b-2 print:border-black">
+                                                    <tr>
+                                                        {activeReport === 'patients' && ['Paciente', 'HC', 'Documento', 'F. Registro', 'Teléfono', 'Ubicación'].map((h, i) => (
+                                                            <th key={h} style={{ paddingLeft: i === 0 ? '20px' : '' }} className="px-4 py-4 font-bold text-slate-700 text-left uppercase text-xs tracking-wider whitespace-nowrap">{h}</th>
+                                                        ))}
+                                                        {activeReport === 'appointments' && ['Paciente', 'Fecha', 'Hora', 'Tipo', 'Estado'].map((h, i) => (
+                                                            <th key={h} style={{ paddingLeft: i === 0 ? '20px' : '' }} className="px-4 py-4 font-bold text-slate-700 text-left uppercase text-xs tracking-wider whitespace-nowrap">{h}</th>
+                                                        ))}
+                                                        {activeReport === 'exams' && ['Paciente', 'Examen', 'Fecha', 'Doctor', 'Estado'].map((h, i) => (
+                                                            <th key={h} style={{ paddingLeft: i === 0 ? '20px' : '' }} className="px-4 py-4 font-bold text-slate-700 text-left uppercase text-xs tracking-wider whitespace-nowrap">{h}</th>
+                                                        ))}
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-100">
+                                                    {results.map((row, index) => (
+                                                        <tr key={index} className="hover:bg-blue-50/50 transition-colors">
+                                                            {activeReport === 'patients' && (
+                                                                <>
+                                                                    <td style={{ paddingLeft: '20px' }} className="px-4 py-4 font-semibold text-slate-800 whitespace-nowrap">{row.fullName}</td>
+                                                                    <td className="px-4 py-4 whitespace-nowrap"><span className="font-mono text-xs bg-slate-100 px-2 py-1 rounded text-slate-600">{row.clinicalHistoryNumber}</span></td>
+                                                                    <td className="px-4 py-4 whitespace-nowrap">{row.dni}</td>
+                                                                    <td className="px-4 py-4 whitespace-nowrap">{row.registrationDate}</td>
+                                                                    <td className="px-4 py-4 text-xs whitespace-nowrap">{row.phone}</td>
+                                                                    <td className="px-4 py-4 text-xs whitespace-nowrap">{row.department}/{row.province}</td>
+                                                                </>
+                                                            )}
+                                                            {activeReport === 'appointments' && (
+                                                                <>
+                                                                    <td style={{ paddingLeft: '20px' }} className="px-6 py-4 font-semibold text-slate-800">{row.patientName}</td>
+                                                                    <td className="px-6 py-4">{row.date}</td>
+                                                                    <td className="px-6 py-4 font-mono text-xs">{row.time}</td>
+                                                                    <td className="px-6 py-4"><span className="text-xs font-medium px-2 py-1 bg-indigo-50 text-indigo-700 rounded-md">{row.type}</span></td>
+                                                                    <td className="px-6 py-4">
+                                                                        <div className="print:hidden">
+                                                                            <StatusBadge status={row.status} />
+                                                                        </div>
+                                                                        <div className="hidden print:block status-badge-print">
+                                                                            {row.status}
+                                                                        </div>
+                                                                    </td>
+                                                                </>
+                                                            )}
+                                                            {activeReport === 'exams' && (
+                                                                <>
+                                                                    <td style={{ paddingLeft: '20px' }} className="px-6 py-4 font-semibold text-slate-800">{row.patientName || <span className="text-slate-400 italic">Desconocido</span>}</td>
+                                                                    <td className="px-6 py-4 text-indigo-600 font-medium">{row.type}</td>
+                                                                    <td className="px-6 py-4">{row.date}</td>
+                                                                    <td className="px-6 py-4 text-xs">{row.doctorName || '-'}</td>
+                                                                    <td className="px-6 py-4">
+                                                                        <div className="print:hidden">
+                                                                            <StatusBadge status={row.status} />
+                                                                        </div>
+                                                                        <div className="hidden print:block status-badge-print">
+                                                                            {row.status}
+                                                                        </div>
+                                                                    </td>
+                                                                </>
+                                                            )}
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center h-[400px] text-center p-8 bg-slate-50/50">
+                                            <div className="bg-white p-6 rounded-full shadow-sm mb-4">
+                                                <Search size={48} className="text-slate-300" />
+                                            </div>
+                                            <h3 className="text-xl font-bold text-slate-700 mb-2">Esperando Consulta</h3>
+                                            <p className="text-slate-500 max-w-sm">
+                                                Utilice el panel de configuración a la izquierda para seleccionar fechas y filtros, luego presione "Generar Informe".
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             )}
-
-
         </div>
     );
 };

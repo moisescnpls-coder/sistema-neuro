@@ -44,6 +44,7 @@ const Clinico = () => {
     const [uploadExamId, setUploadExamId] = useState(null);
     const [fileToUpload, setFileToUpload] = useState(null);
     const [uploadNote, setUploadNote] = useState('');
+    const [usePrePrinted, setUsePrePrinted] = useState(false); // Toggle for letterhead printing
 
     useEffect(() => {
         if (!isAdmin() && !hasPermission('view_clinical')) {
@@ -242,7 +243,7 @@ const Clinico = () => {
     const handlePrintRx = async (rx) => {
         try {
             const settings = await dataService.getSettings();
-            const API_HOST = `http://${window.location.hostname}:5000`;
+            const API_HOST = `http://${window.location.hostname}:3001`;
             const printWindow = window.open('', '', 'height=800,width=1200');
 
             const logoUrl = settings.logoUrl ? `${API_HOST}/${settings.logoUrl}` : '';
@@ -253,7 +254,7 @@ const Clinico = () => {
                     <title></title>
                     <style>
                         @page { 
-                            size: landscape;
+                            size: 21.59cm 22.5cm;
                             margin: 0;
                         }
                         * {
@@ -262,10 +263,10 @@ const Clinico = () => {
                             box-sizing: border-box;
                         }
                         body { 
-                            font-family: 'Arial', sans-serif;
-                            color: #000;
+                            font-family: 'Calibri', sans-serif;
+                            color: #2F5496;
                             font-size: 10pt;
-                            line-height: 1.25;
+                            line-height: 1.15;
                         }
                         
                         /* Two Column Layout - Each independent */
@@ -276,7 +277,7 @@ const Clinico = () => {
                         }
                         
                         .half-page {
-                            padding: 10mm;
+                            padding: 8mm 10mm 10mm 10mm;
                             border-right: 1px dashed #999;
                             display: flex;
                             flex-direction: column;
@@ -289,113 +290,147 @@ const Clinico = () => {
                         /* Header (repeated on both sides) */
                         .header { 
                             text-align: center;
-                            border-bottom: 2px solid #000;
-                            padding-bottom: 5px;
-                            margin-bottom: 8px;
-                        }
-                        .doctor-name {
-                            font-family: 'Georgia', 'Times New Roman', serif;
-                            font-size: 14pt;
-                            font-weight: bold;
+                            /* border-bottom removed */
                             margin-bottom: 2px;
-                            letter-spacing: 0.5px;
+                        }
+                        
+                        /* Double line separator */
+                        .header-line {
+                            height: 4px;
+                            border-top: 2px solid #2F5496;
+                            border-bottom: 1px solid #2F5496;
+                            margin-bottom: 10px;
+                        }
+                        
+                        .doctor-name {
+                            font-family: 'Brush Script MT', cursive;
+                            font-size: 26pt;
+                            color: #2F5496;
+                            margin-bottom: 2px;
+                            line-height: 1.2;
+                            font-weight: bold;
                         }
                         .specialty {
-                            font-size: 10pt;
-                            font-weight: bold;
+                            font-family: 'Calibri', sans-serif;
+                            font-size: 11pt;
+                            color: #2F5496;
                             margin-bottom: 1px;
+                            font-weight: bold;
                         }
                         .registration {
-                            font-size: 8pt;
+                            font-family: 'Calibri', sans-serif;
+                            font-size: 11pt;
+                            color: #2F5496;
                             margin-bottom: 1px;
+                            font-weight: bold;
                         }
                         .specialty-desc {
-                            font-size: 8pt;
+                            font-family: 'Arial', sans-serif;
                             font-weight: bold;
-                            margin-bottom: 4px;
+                            font-size: 11pt;
+                            color: #2F5496;
+                            margin-bottom: 8px;
                         }
                         .office-info {
                             display: grid;
-                            grid-template-columns: auto 1fr auto;
+                            grid-template-columns: 1fr 1fr;
                             gap: 10px;
-                            font-size: 7pt;
-                            align-items: center;
+                            font-family: 'Calibri', sans-serif;
+                            font-size: 9pt;
+                            color: #2F5496;
+                            align-items: start;
                             margin-top: 4px;
-                        }
-                        .office-left {
                             text-align: left;
+                            font-weight: bold;
                         }
-                        .office-center {
-                            text-align: center;
+                        .office-column {
+                            display: flex;
+                            flex-direction: column;
                         }
-                        .office-right {
+                        .office-column.right {
                             text-align: right;
                         }
-                        
-                        /* Patient Info (repeated on both sides) */
-                        .patient-info { 
-                            background: #f0f0f0;
-                            padding: 5px 8px;
-                            margin-bottom: 8px;
-                            border: 1px solid #999;
-                            font-size: 8pt;
-                        }
-                        .patient-info strong {
+                        .office-label {
                             font-weight: bold;
                         }
                         
-                        /* Content Area */
+                        /* Patient Info - Transparent, bold, no border */
+                        .patient-info { 
+                            background: transparent;
+                            padding: 0;
+                            margin-bottom: 10px;
+                            border: none;
+                            font-size: 9pt;
+                            color: #000;
+                            font-weight: bold;
+                            font-family: 'Calibri', sans-serif;
+                        }
+                        .patient-info strong { font-weight: bold; }
+                        
+                        /* Content Area - No border, more up */
                         .content-area {
-                            border: 2px solid #000;
-                            padding: 12px;
+                            border: none;
+                            padding: 0 12px 12px 12px;
                             flex: 1;
                             position: relative;
                             overflow: hidden;
                             min-height: 200px;
-                            max-height: 530px;
+                            max-height: 480px; /* Enforced limit based on page height */
+                            color: #000;
                         }
                         
                         /* Watermark */
                         .content-area::before {
                             content: '';
                             position: absolute;
-                            top: 50%;
+                            top: 0.5cm;
                             left: 50%;
-                            transform: translate(-50%, -50%);
-                            width: 200px;
-                            height: 200px;
-                            background-image: url('${logoUrl}');
-                            background-size: contain;
-                            background-repeat: no-repeat;
-                            background-position: center;
-                            opacity: 0.06;
+                            transform: translateX(-50%);
+                            width: 6.5cm;
+                            height: 7.5cm;
+                            background-color: #2F5496;
+                            -webkit-mask-image: url('${logoUrl}');
+                            mask-image: url('${logoUrl}');
+                            -webkit-mask-repeat: no-repeat;
+                            mask-repeat: no-repeat;
+                            -webkit-mask-position: center;
+                            mask-position: center;
+                            -webkit-mask-size: contain;
+                            mask-size: contain;
+                            opacity: 0.15;
                             z-index: 0;
+                            pointer-events: none;
                             -webkit-print-color-adjust: exact;
                             print-color-adjust: exact;
                         }
                         
-                        .content-area > * {
-                            position: relative;
-                            z-index: 1;
-                        }
+                        .content-area > * { position: relative; z-index: 1; }
                         
                         .content-title {
-                            font-size: 14pt;
+                            font-family: 'Brush Script MT', cursive;
                             font-weight: bold;
-                            text-align: center;
-                            margin-bottom: 10px;
-                            padding-bottom: 6px;
-                            border-bottom: 1px solid #000;
+                            font-size: 16pt;
+                            color: #2F5496;
+                            text-align: left;
+                            margin-bottom: 5px;
+                            padding-left: 0;
                         }
                         
-                        /* Medications List */
+                        .exam-content {
+                            font-size: 9pt;
+                            line-height: 1.4;
+                            white-space: pre-line;
+                            margin-top: 10px;
+                        }
+                        
+                        /* Medications List - Compact */
                         .med-list {
                             list-style: none;
                             padding: 0;
                         }
                         .med-item {
-                            margin-bottom: 8px;
-                            padding-bottom: 6px;
+                            margin-bottom: 6px;
+                            padding-bottom: 4px;
                             border-bottom: 1px dotted #ccc;
                         }
                         .med-item:last-child {
@@ -405,38 +440,29 @@ const Clinico = () => {
                             font-weight: bold;
                             font-size: 10pt;
                             display: block;
-                            margin-bottom: 2px;
+                            margin-bottom: 1px;
                         }
                         .med-details {
                             font-size: 8pt;
                             color: #333;
                             margin-left: 6px;
                         }
-                        
+
                         /* Instructions */
                         .instructions-content {
                             font-size: 9pt;
                             line-height: 1.4;
                             white-space: pre-line;
-                            word-wrap: break-word;
                             padding: 0 !important;
                             margin: 0 !important;
                             text-align: left !important;
-                            text-indent: 0 !important;
-                            display: block;
-                            box-sizing: border-box;
                         }
-                        
-                        .instructions-content::first-line {
-                            margin-left: 0 !important;
-                            text-indent: 0 !important;
-                        }
-                        
-                        /* Signature - Now inside content box */
+
+                        /* Signature - Dynamic position, Black */
                         .signature-area {
-                            margin-top: auto;
-                            padding-top: 100px;
+                            margin-top: 40px;
                             text-align: right;
+                            page-break-inside: avoid;
                         }
                         .signature-box {
                             display: inline-block;
@@ -445,12 +471,26 @@ const Clinico = () => {
                             text-align: center;
                             padding-top: 4px;
                             font-size: 8pt;
+                            color: #000;
                         }
                         
+
+                        /* Pre-printed mode */
+                        body.pre-printed .header, 
+                        body.pre-printed .header-line,
+                        body.pre-printed .print-label,
+                        body.pre-printed .content-title,
+                        body.pre-printed .patient-info { 
+                            visibility: hidden; 
+                        }
+                        body.pre-printed .content-area::before { 
+                            display: none; 
+                        }
+
                         @media print {
                             @page {
                                 margin: 0;
-                                size: landscape;
+                                size: 21.59cm 22.5cm;
                             }
                             body {
                                 margin: 0;
@@ -459,40 +499,36 @@ const Clinico = () => {
                         }
                     </style>
                 </head>
-                <body>
+                <body class="${usePrePrinted ? 'pre-printed' : ''}">
                     <div class="page-grid">
                         <!-- LEFT HALF: Rp. (Medications) -->
                         <div class="half-page">
                             <!-- Header -->
                             <div class="header">
                                 <div class="doctor-name">Lucrecia Compén Kong</div>
-                                <div class="specialty">MÉDICO NEURÓLOGO</div>
-                                <div class="registration">C.M.P. 10837 - R.N.E. 3407</div>
+                                <div class="specialty">MEDICO NEURÓLOGA</div>
+                                <div class="registration">CMP 10837 - RNE 3407</div>
                                 <div class="specialty-desc">ENFERMEDADES DEL SISTEMA NERVIOSO</div>
                                 
                                 <div class="office-info">
-                                    <div class="office-left">
-                                        <strong>Consultorio:</strong><br>
-                                        Bolívar 276 - Of. 101<br>
-                                        📞 44 308318 - 949099550
+                                    <div class="office-column">
+                                        <div class="office-label">Consultorio</div>
+                                        <div>Bolívar 276 Of 101-Trujillo</div>
+                                        <div>Tel 44-308318 – 949099550</div>
                                     </div>
-                                    <div class="office-center">
-                                        <strong>Lunes a Viernes</strong><br>
-                                        10 a.m a 1 p.m<br>
-                                        4 p.m a 8 p.m
-                                    </div>
-                                    <div class="office-right">
-                                        <strong>Trujillo</strong><br>
-                                        Sábados<br>
-                                        Previa Cita
+                                    <div class="office-column right">
+                                        <div class="office-label">Lunes a viernes:</div>
+                                        <div>10 am a 12m</div>
+                                        <div>4 pm a 8 pm</div>
                                     </div>
                                 </div>
                             </div>
+                            <div class="header-line"></div>
 
                             <!-- Patient Info -->
                             <div class="patient-info">
-                                <strong>Paciente:</strong> ${selectedPatient.fullName}<br>
-                                <strong>Fecha:</strong> ${(() => {
+                                <strong><span class="print-label">Paciente:</span></strong> ${selectedPatient.fullName}<br>
+                                <strong><span class="print-label">Fecha:</span></strong> ${(() => {
                     const dateStr = rx.prescriptionDate || new Date().toISOString().split('T')[0];
                     const [y, m, d] = dateStr.split('-');
                     return `${d}/${m}/${y}`;
@@ -501,7 +537,8 @@ const Clinico = () => {
 
                             <!-- Content: Rp. -->
                             <div class="content-area">
-                                <div class="content-title">Rp.</div>
+                                <div class="content-title">Indicaciones</div> <!-- User asked for Indicaciones style generally, replacing Rp. title might be desired or keeping Rp but styled. Wait, user provided image with "Indicaciones:" at bottom. For prescription, usually it is Rp. I will keep Rp but style it like requested if apply. actually, user said "Indicaciones - Brush Script..." I'll use "Rp." for meds with that style, or should I change it to "Indicaciones"? In previous turn user said "Replace Rp. with Indicaciones" for exam orders. For Prescriptions it is usually Rp. I will use "Rp." here but styled. Wait, the prompt says "Indicaciones ... igual de recetas". I'll stick to "Rp." for prescriptions (Left side) and "Indicaciones" (Right side) but both styled. actually, let's use "Rp." for meds. -->
+                                <div class="content-title" style="margin-top:0;">Rp.</div>
                                 ${rx.medications && rx.medications.length > 0 ? `
                                     <ul class="med-list">
                                         ${rx.medications.map(m => `
@@ -533,33 +570,28 @@ const Clinico = () => {
                             <!-- Header (repeated) -->
                             <div class="header">
                                 <div class="doctor-name">Lucrecia Compén Kong</div>
-                                <div class="specialty">MÉDICO NEURÓLOGO</div>
-                                <div class="registration">C.M.P. 10837 - R.N.E. 3407</div>
+                                <div class="specialty">MEDICO NEURÓLOGA</div>
+                                <div class="registration">CMP 10837 - RNE 3407</div>
                                 <div class="specialty-desc">ENFERMEDADES DEL SISTEMA NERVIOSO</div>
                                 
                                 <div class="office-info">
-                                    <div class="office-left">
-                                        <strong>Consultorio:</strong><br>
-                                        Bolívar 276 - Of. 101<br>
-                                        📞 44 308318 - 949099550
+                                    <div class="office-column">
+                                        <div class="office-label">Consultorio</div>
+                                        <div>Bolívar 276 Of 101-Trujillo</div>
+                                        <div>Tel 44-308318 – 949099550</div>
                                     </div>
-                                    <div class="office-center">
-                                        <strong>Lunes a Viernes</strong><br>
-                                        10 a.m a 1 p.m<br>
-                                        4 p.m a 8 p.m
-                                    </div>
-                                    <div class="office-right">
-                                        <strong>Trujillo</strong><br>
-                                        Sábados<br>
-                                        Previa Cita
+                                    <div class="office-column right">
+                                        <div class="office-label">Lunes a viernes:</div>
+                                        <div>10 am a 12m</div>
+                                        <div>4 pm a 8 pm</div>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Patient Info (repeated) -->
                             <div class="patient-info">
-                                <strong>Paciente:</strong> ${selectedPatient.fullName}<br>
-                                <strong>Fecha:</strong> ${(() => {
+                                <strong><span class="print-label">Paciente:</span></strong> ${selectedPatient.fullName}<br>
+                                <strong><span class="print-label">Fecha:</span></strong> ${(() => {
                     const dateStr = rx.prescriptionDate || new Date().toISOString().split('T')[0];
                     const [y, m, d] = dateStr.split('-');
                     return `${d}/${m}/${y}`;
@@ -568,7 +600,7 @@ const Clinico = () => {
 
                             <!-- Content: Indicaciones -->
                             <div class="content-area">
-                                <div class="content-title">Indicaciones</div>
+                                <div class="content-title">Indicaciones:</div>
                                 <div class="instructions-content">
                                     ${(rx.instructions || '').trim()}
                                 </div>
@@ -606,7 +638,7 @@ const Clinico = () => {
     const handlePrintExam = async (exam) => {
         try {
             const settings = await dataService.getSettings();
-            const API_HOST = `http://${window.location.hostname}:5000`;
+            const API_HOST = `http://${window.location.hostname}:3001`;
             const printWindow = window.open('', '', 'height=800,width=1000');
 
             const logoUrl = settings.logoUrl ? `${API_HOST}/${settings.logoUrl}` : '';
@@ -617,8 +649,8 @@ const Clinico = () => {
                     <title>Orden de Examen</title>
                     <style>
                         @page { 
-                            size: A4 portrait;
-                            margin: 0mm; /* Using mm units explicitly mostly reliable */
+                            size: 21.59cm 22.5cm;
+                            margin: 0;
                         }
                         * {
                             margin: 0;
@@ -626,259 +658,259 @@ const Clinico = () => {
                             box-sizing: border-box;
                         }
                         body { 
-                            font-family: 'Arial', sans-serif;
-                            color: #000;
-                            background: white;
-                            width: 210mm;
-                            height: 297mm;
-                            padding: 20mm; /* Internal margin for content */
-                            margin: 0; /* Reset body margin */
+                            font-family: 'Calibri', sans-serif;
+                            color: #2F5496;
+                            font-size: 10pt;
+                            line-height: 1.15;
                         }
                         
-                        /* Container */
-                        .container {
-                            width: 100%;
+                        /* Two Column Layout */
+                        .page-grid {
+                            display: grid;
+                            grid-template-columns: 1fr 1fr;
+                            min-height: 100vh;
+                        }
+                        
+                        .half-page {
+                            padding: 8mm 10mm 10mm 10mm;
+                            border-right: 1px dashed #999;
                             display: flex;
                             flex-direction: column;
                         }
-
-                        /* Header */
-                        .header {
-                            text-align: center;
-                            margin-bottom: 20px;
-                        }
-                        .doctor-name {
-                            font-size: 16pt;
-                            font-weight: bold;
-                            margin-bottom: 5px;
-                            color: #000;
-                        }
-                        .doctor-specialty {
-                            font-size: 11pt;
-                            text-transform: uppercase;
-                            font-weight: bold;
-                            margin-bottom: 3px;
-                            color: #333;
-                        }
-                        .doctor-details {
-                            font-size: 9pt;
-                            margin-bottom: 2px;
-                            color: #444;
+                        
+                        .half-page:last-child {
+                            border-right: none;
                         }
                         
-                        /* Info Bar - Grid for perfect alignment */
-                        .info-bar {
-                            display: grid;
-                            grid-template-columns: 1fr 1fr 1fr;
-                            gap: 10px;
-                            font-size: 8pt;
-                            margin-bottom: 25px;
-                            border-bottom: 2px solid #000;
-                            padding-bottom: 10px;
-                            align-items: start;
-                        }
-                        .office-left {
-                            text-align: left;
-                        }
-                        .office-center {
+/* Header */
+                        .header { 
                             text-align: center;
+                            /* border-bottom removed */
+                            margin-bottom: 2px;
                         }
-                        .office-right {
+                        .header-line {
+                            height: 4px;
+                            border-top: 2px solid #2F5496;
+                            border-bottom: 1px solid #2F5496;
+                            margin-bottom: 10px;
+                        }
+                        
+                        .doctor-name {
+                            font-family: 'Brush Script MT', cursive;
+                            font-size: 26pt;
+                            color: #2F5496;
+                            margin-bottom: 2px;
+                            line-height: 1.2;
+                            font-weight: bold;
+                        }
+                        .specialty {
+                            font-family: 'Calibri', sans-serif;
+                            font-size: 11pt;
+                            color: #2F5496;
+                            margin-bottom: 1px;
+                            font-weight: bold;
+                        }
+                        .registration {
+                            font-family: 'Calibri', sans-serif;
+                            font-size: 11pt;
+                            color: #2F5496;
+                            margin-bottom: 1px;
+                            font-weight: bold;
+                        }
+                        .specialty-desc {
+                            font-family: 'Arial', sans-serif;
+                            font-weight: bold;
+                            font-size: 11pt;
+                            color: #2F5496;
+                            margin-bottom: 8px;
+                        }
+                        .office-info {
+                            display: grid;
+                            grid-template-columns: 1fr 1fr;
+                            gap: 10px;
+                            font-family: 'Calibri', sans-serif;
+                            font-size: 9pt;
+                            color: #2F5496;
+                            align-items: start;
+                            margin-top: 4px;
+                            text-align: left;
+                            font-weight: bold;
+                        }
+                        .office-column {
+                            display: flex;
+                            flex-direction: column;
+                        }
+                        .office-column.right {
                             text-align: right;
                         }
-
-                        /* Patient Info */
-                        .patient-info {
-                            font-size: 10pt;
-                            margin-bottom: 25px;
-                            padding: 12px;
-                            background: #f9f9f9;
-                            border: 1px solid #ddd;
-                            border-radius: 4px;
-                            line-height: 1.6;
+                        .office-label {
+                            font-weight: bold;
                         }
-
+                        
+                        /* Patient Info */
+                        .patient-info { 
+                            background: transparent;
+                            padding: 0;
+                            margin-bottom: 10px;
+                            border: none;
+                            font-size: 9pt;
+                            color: #000;
+                            font-weight: bold;
+                            font-family: 'Calibri', sans-serif;
+                        }
+                        .patient-info strong { font-weight: bold; }
+                        
                         /* Content Area */
                         .content-area {
-                            border: 2px solid #000;
-                            padding: 25px;
+                            border: none;
+                            padding: 0 12px 12px 12px;
                             flex: 1;
                             position: relative;
-                            display: flex;
-                            flex-direction: column;
-                            min-height: 400px;
+                            overflow: hidden;
+                            min-height: 200px;
+                            max-height: 480px; /* Enforced limit based on page height */
+                            color: #000;
                         }
                         
                         /* Watermark */
-                        ${logoUrl ? `
-                        .watermark {
+                        .content-area::before {
+                            content: '';
                             position: absolute;
-                            top: 50%;
+                            top: 0.5cm;
                             left: 50%;
-                            transform: translate(-50%, -50%);
-                            width: 60%;
-                            height: auto;
-                            opacity: 0.06;
+                            transform: translateX(-50%);
+                            width: 6.5cm;
+                            height: 7.5cm;
+                            background-color: #2F5496;
+                            -webkit-mask-image: url('${logoUrl}');
+                            mask-image: url('${logoUrl}');
+                            -webkit-mask-repeat: no-repeat;
+                            mask-repeat: no-repeat;
+                            -webkit-mask-position: center;
+                            mask-position: center;
+                            -webkit-mask-size: contain;
+                            mask-size: contain;
+                            opacity: 0.15;
                             z-index: 0;
                             pointer-events: none;
-                        }` : ''}
-
+                            -webkit-print-color-adjust: exact;
+                            print-color-adjust: exact;
+                        }
+                        
+                        .content-area > * { position: relative; z-index: 1; }
+                        
                         .content-title {
+                            font-family: 'Brush Script MT', cursive;
                             font-weight: bold;
-                            text-align: center;
                             font-size: 16pt;
-                            margin-bottom: 35px;
-                            text-decoration: underline;
-                            text-transform: uppercase;
-                            position: relative;
-                            z-index: 1;
-                        }
-
-                        /* Exam Details */
-                        .exam-content {
-                            font-size: 11pt;
-                            line-height: 1.6;
-                            position: relative;
-                            z-index: 1;
-                            flex: 1;
-                        }
-                        
-                        .exam-section {
-                            margin-bottom: 25px;
-                        }
-                        
-                        .exam-label {
-                            font-weight: bold;
-                            font-size: 12pt;
-                            display: block;
+                            color: #2F5496;
+                            text-align: left;
                             margin-bottom: 5px;
-                            color: #000;
-                            border-bottom: 1px solid #ccc;
-                            padding-bottom: 2px;
-                            width: 100%;
+                            padding-left: 0;
                         }
                         
-                        .exam-value {
-                            font-size: 12pt;
-                            padding-left: 5px;
-                            display: block;
-                        }
-                        
-                        .exam-notes {
-                            white-space: pre-wrap;
-                            font-family: 'Arial', sans-serif;
-                            font-size: 11pt;
-                            margin-top: 5px;
-                            padding-left: 5px;
+                        .exam-content {
+                            font-size: 9pt;
+                            line-height: 1.4;
+                            white-space: pre-line;
+                            margin-top: 10px;
                         }
                         
                         /* Signature */
                         .signature-area {
-                            margin-top: 100px;
+                            margin-top: 40px;
                             text-align: right;
-                            position: relative;
-                            z-index: 1;
+                            page-break-inside: avoid;
                         }
                         .signature-box {
                             display: inline-block;
-                            text-align: center;
                             border-top: 1px solid #000;
-                            padding-top: 8px;
-                            min-width: 220px;
-                            font-size: 10pt;
+                            min-width: 200px;
+                            text-align: center;
+                            padding-top: 4px;
+                            font-size: 8pt;
+                            color: #000;
                         }
-
+                        
+                        /* Pre-printed mode */
+                        body.pre-printed .header, 
+                        body.pre-printed .header-line,
+                        body.pre-printed .print-label,
+                        body.pre-printed .content-title,
+                        body.pre-printed .patient-info { 
+                            visibility: hidden; 
+                        }
+                        body.pre-printed .content-area::before { 
+                            display: none; 
+                        }
+                        
                         @media print {
                             @page {
                                 margin: 0;
-                                size: A4 portrait;
+                                size: 21.59cm 22.5cm;
                             }
                             body {
                                 margin: 0;
-                                padding: 20mm;
-                                -webkit-print-color-adjust: exact;
+                                padding: 0;
                             }
                         }
                     </style>
                 </head>
-                <body>
-                    <div class="container">
-                        <!-- Header -->
-                        <div class="header">
-                            <div class="doctor-name">Lucrecia Compén Kong</div>
-                            <div class="doctor-specialty">MÉDICO NEURÓLOGO</div>
-                            <div class="doctor-details">C.M.P. 10837 - R.N.E. 3407</div>
-                            <div class="doctor-details">ENFERMEDADES DEL SISTEMA NERVIOSO</div>
-                        </div>
+                <body class="${usePrePrinted ? 'pre-printed' : ''}">
+                    <div class="page-grid">
+                        ${[1, 2].map(() => `
+                            <div class="half-page">
+                                <div class="header">
+                                    <div class="doctor-name">Lucrecia Compén Kong</div>
+                                    <div class="specialty">MEDICO NEURÓLOGA</div>
+                                    <div class="registration">CMP 10837 - RNE 3407</div>
+                                    <div class="specialty-desc">ENFERMEDADES DEL SISTEMA NERVIOSO</div>
+                                    
+                                    <div class="office-info">
+                                        <div class="office-column">
+                                            <div class="office-label">Consultorio</div>
+                                            <div>Bolívar 276 Of 101-Trujillo</div>
+                                            <div>Tel 44-308318 – 949099550</div>
+                                        </div>
+                                        <div class="office-column right">
+                                            <div class="office-label">Lunes a viernes:</div>
+                                            <div>10 am a 12m</div>
+                                            <div>4 pm a 8 pm</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="header-line"></div>
 
-                        <!-- Info Bar -->
-                        <div class="info-bar">
-                            <div class="office-left">
-                                <strong>Consultorio:</strong><br>
-                                Bolívar 276 - Of. 101<br>
-                                📞 44 308318 - 949099550
-                            </div>
-                            <div class="office-center">
-                                <strong>Horario de Atención:</strong><br>
-                                Lunes a Viernes: 10am - 1pm / 4pm - 8pm<br>
-                            </div>
-                            <div class="office-right">
-                                <strong>Trujillo</strong><br>
-                                Sábados: Previa Cita
-                            </div>
-                        </div>
-
-                        <!-- Patient Info -->
-                        <div class="patient-info">
-                            <table style="width: 100%; border-collapse: collapse;">
-                                <tr>
-                                    <td style="padding-bottom: 5px;"><strong>Paciente:</strong> ${selectedPatient.fullName}</td>
-                                    <td style="text-align: right; padding-bottom: 5px;"><strong>${selectedPatient.documentType || 'DNI'}:</strong> ${selectedPatient.dni || selectedPatient.documentNumber || '-'}</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Edad:</strong> ${selectedPatient.age || (new Date().getFullYear() - new Date(selectedPatient.birthDate).getFullYear())} años</td>
-                                    <td style="text-align: right;"><strong>Fecha:</strong> ${(() => {
+                                <div class="patient-info">
+                                    <strong><span class="print-label">Paciente:</span></strong> ${selectedPatient.fullName}<br>
+                                    <strong><span class="print-label">Fecha:</span></strong> ${(() => {
                     const dateStr = exam.examDate || exam.date || new Date().toISOString().split('T')[0];
                     const [y, m, d] = dateStr.split('-');
                     return `${d}/${m}/${y}`;
-                })()}</td>
-                                </tr>
-                            </table>
-                        </div>
+                })()}
+                                </div>
 
-                    <!-- Content: Exam Order -->
-                    <div class="content-area">
-                        ${logoUrl ? `<img src="${logoUrl}" class="watermark" alt="Logo" />` : ''}
-                        
-                        <div class="content-title">Orden de Examen</div>
-                        
-                        <div class="exam-content">
-                            <div class="exam-section">
-                                <span class="exam-label">Examen Solicitado:</span>
-                                <span class="exam-value"><strong>${exam.type}</strong></span>
+                                <div class="content-area">
+                                    <div class="content-title">Indicaciones:</div>
+                                    <div class="exam-content">
+                                        <strong>${exam.type}</strong>
+                                        ${exam.reason ? `<br><br>Motivo: ${exam.reason}` : ''}
+                                    </div>
+                                    
+                                    <div class="signature-area">
+                                        <div class="signature-box">
+                                            <strong>Firma y Sello</strong><br>
+                                            <small>Dra. Lucrecia Compén Kong</small><br>
+                                            <small>C.M.P. 10837</small>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-
-                            ${exam.reason ? `
-                            <div class="exam-section">
-                                <span class="exam-label">Indicación Clínica / Detalles:</span>
-                                <div class="exam-notes">${exam.reason}</div>
-                            </div>
-                            ` : ''}
-                        </div>
-                        
-                        <!-- Signature inside box -->
-                        <div class="signature-area">
-                            <div class="signature-box">
-                                <strong>Firma y Sello</strong><br>
-                                <small>Dra. Lucrecia Compén Kong</small><br>
-                                <small>C.M.P. 10837</small>
-                            </div>
-                        </div>
+                        `).join('')}
                     </div>
                     <script>
                         window.onload = function() { 
-                            // Try to remove browser headers/footers if possible via title
-                            document.title = 'Orden de Examen';
+                            document.title = '';
                             window.print();
                         }
                     </script>
@@ -998,10 +1030,19 @@ const Clinico = () => {
                         >
                             <Activity size={20} /> Solicitud de Exámenes
                         </button>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginLeft: 'auto', marginRight: '1rem', fontSize: '0.9rem', userSelect: 'none', color: '#475569' }}>
+                            <input
+                                type="checkbox"
+                                checked={usePrePrinted}
+                                onChange={e => setUsePrePrinted(e.target.checked)}
+                                style={{ width: '16px', height: '16px', accentColor: '#2F5496' }}
+                            />
+                            <span>Papel Membretado</span>
+                        </label>
                         <button
                             onClick={() => navigate(`/pacientes/${selectedPatient.id}`)}
                             className="btn-secondary"
-                            style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' }}
+                            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                             title="Ver Historial Completo"
                         >
                             <History size={20} /> Ver Historial
@@ -1079,16 +1120,16 @@ const Clinico = () => {
                                     placeholder="Instrucciones adicionales..."
                                     value={currentRx.instructions}
                                     onChange={e => setCurrentRx({ ...currentRx, instructions: e.target.value })}
-                                    maxLength={550}
+                                    maxLength={1000}
                                     style={{ marginBottom: '0.5rem' }}
                                 ></textarea>
                                 <div style={{
                                     textAlign: 'right',
                                     fontSize: '0.85rem',
-                                    color: (currentRx.instructions?.length || 0) > 500 ? '#dc2626' : 'var(--text-muted)',
+                                    color: (currentRx.instructions?.length || 0) > 950 ? '#dc2626' : 'var(--text-muted)',
                                     marginBottom: '1rem'
                                 }}>
-                                    {currentRx.instructions?.length || 0}/550 caracteres
+                                    {currentRx.instructions?.length || 0}/1000 caracteres
                                 </div>
 
                                 <button onClick={savePrescription} className="btn-primary" style={{ width: '100%' }}>
@@ -1178,7 +1219,7 @@ const Clinico = () => {
                                     <textarea
                                         className="input-field"
                                         rows="3"
-                                        maxLength={550}
+                                        maxLength={1000}
                                         placeholder="Indicación Clínica / Detalles del Examen..."
                                         value={newExam.reason}
                                         onChange={e => setNewExam({ ...newExam, reason: e.target.value })}
@@ -1188,9 +1229,9 @@ const Clinico = () => {
                                         bottom: '8px',
                                         right: '8px',
                                         fontSize: '0.7rem',
-                                        color: (newExam.reason?.length || 0) > 500 ? 'var(--danger)' : 'var(--text-muted)'
+                                        color: (newExam.reason?.length || 0) > 950 ? 'var(--danger)' : 'var(--text-muted)'
                                     }}>
-                                        {newExam.reason?.length || 0}/550
+                                        {newExam.reason?.length || 0}/1000
                                     </span>
                                 </div>
                                 <button onClick={saveExamRequest} className="btn-primary" style={{ width: '100%' }}>Generar Solicitud</button>
@@ -1271,7 +1312,7 @@ const Clinico = () => {
                                                     {ex.results.map(r => (
                                                         <div key={r.id} style={{ display: 'flex', alignItems: 'center', marginBottom: '4px', flexWrap: 'wrap' }}>
                                                             <a
-                                                                href={`http://localhost:5000/${r.filePath}`}
+                                                                href={`http://localhost:3001/${r.filePath}`}
                                                                 target="_blank"
                                                                 rel="noreferrer"
                                                                 style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--primary)', fontSize: '0.9rem', textDecoration: 'none', marginRight: '10px' }}

@@ -4,7 +4,7 @@ Este guia explica como configurar o Sistema Neuro para que ele inicie automatica
 
 ## 1. Blindagem de Portas (Já configurado)
 Fizemos as seguintes alterações para garantir estabilidade:
-- **Backend**: Forçado a usar a porta **5000**. Se estiver ocupada, ele não iniciará (em vez de pegar uma porta aleatória), facilitando a detecção do erro.
+- **Backend**: Forçado a usar a porta **3001**. Se estiver ocupada, ele não iniciará (em vez de pegar uma porta aleatória), facilitando a detecção do erro.
 - **Frontend**: Forçado a usar a porta **5173**.
 
 ## 2. Instalação do Gerenciador (PM2)

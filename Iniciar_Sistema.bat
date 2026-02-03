@@ -8,10 +8,10 @@ echo ===================================================
 echo.
 echo [1/2] Verificando puertos...
 :: Kill process on port 5000 if running
-for /f "tokens=5" %%a in ('netstat -aon ^| find ":5000" ^| find "LISTENING"') do taskkill /f /pid %%a >nul 2>&1
+for /f "tokens=5" %%a in ('netstat -aon ^| find ":3001" ^| find "LISTENING"') do taskkill /f /pid %%a >nul 2>&1
 
 echo.
-echo [2/2] Iniciando Servidor Unificado (Puerto 5000)...
+echo [2/2] Iniciando Servidor Unificado (Puerto 3001)...
 :: Runs "node backend/index.js" defined in package.json start script
 start "Sistema Neuro Server" /cmd npm start
 
@@ -22,6 +22,6 @@ echo ===================================================
 echo.
 echo No cierre la ventana negra del servidor.
 echo.
-echo Para abrir el sistema vaya a: http://localhost:5000
+echo Para abrir el sistema vaya a: http://localhost:3001
 echo.
 pause

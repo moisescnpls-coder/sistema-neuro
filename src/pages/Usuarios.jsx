@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Plus, Edit, Trash2, Save, X } from 'lucide-react';
+import { Shield, Plus, Edit, Trash2, Save, X, Eye, EyeOff } from 'lucide-react';
 import { dataService } from '../services/data';
 import { showAlert } from '../utils/alerts';
 import Modal from '../components/Modal';
@@ -12,6 +12,7 @@ const Usuarios = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [currentUser, setCurrentUser] = useState({ username: '', password: '', name: '', role: 'recepcion' });
     const [isEditing, setIsEditing] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const loadUsers = async () => {
         try {
@@ -168,12 +169,33 @@ const Usuarios = () => {
                         <label style={{ display: 'block', marginBottom: '0.2rem', fontSize: '0.875rem', fontWeight: '500', color: '#374151' }}>
                             {isEditing ? "Contraseña (dejar en blanco para mantener)" : "Contraseña"}
                         </label>
-                        <input
-                            type="password"
-                            className="input-field"
-                            value={currentUser.password}
-                            onChange={e => setCurrentUser({ ...currentUser, password: e.target.value })}
-                        />
+                        <div style={{ position: 'relative' }}>
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                className="input-field"
+                                value={currentUser.password}
+                                onChange={e => setCurrentUser({ ...currentUser, password: e.target.value })}
+                                style={{ paddingRight: '2.5rem' }}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                style={{
+                                    position: 'absolute',
+                                    right: '0.5rem',
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#6b7280',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center'
+                                }}
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
                     </div>
                     <div>
                         <label style={{ display: 'block', marginBottom: '0.2rem', fontSize: '0.875rem', fontWeight: '500', color: '#374151' }}>

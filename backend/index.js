@@ -81,7 +81,7 @@ const SECRET_KEY = 'neuro_secret_key_2026'; // Em produção, usar variável de 
 const app = express();
 
 
-const PORT = process.env.PORT || 5000; // Note: If port 5173 is busy, try http://localhost:5174
+const PORT = process.env.PORT || 3001; // Note: If port 5173 is busy, try http://localhost:5174
 
 app.use(compression()); // Enable GZIP compression for all responses
 app.use(cors());
@@ -1531,7 +1531,10 @@ if (fs.existsSync(distPath)) {
     console.log('Frontend build not found. Run "npm run build" to generate it.');
 }
 
+
+
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     console.log(`Access form other computers via: http://localhost:${PORT}`);
 });
+

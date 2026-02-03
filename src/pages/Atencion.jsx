@@ -54,6 +54,17 @@ const Atencion = () => {
     const [deleteExamModalOpen, setDeleteExamModalOpen] = useState(false);
     const [resultToDelete, setResultToDelete] = useState(null); // New state for result deletion
     const [selectedExams, setSelectedExams] = useState([]); // Array of IDs
+    const [usePrePrinted, setUsePrePrinted] = useState(false); // Toggle for letterhead printing
+
+    // History Print State
+    const [historyModalOpen, setHistoryModalOpen] = useState(false);
+    const [historyStartDate, setHistoryStartDate] = useState('');
+    const [historyEndDate, setHistoryEndDate] = useState('');
+    const [printIncludeHistory, setPrintIncludeHistory] = useState(true);
+    const [printIncludeDiagnosis, setPrintIncludeDiagnosis] = useState(true);
+    const [printIncludeRx, setPrintIncludeRx] = useState(true);
+    const [printIncludeExams, setPrintIncludeExams] = useState(true);
+    const [historyError, setHistoryError] = useState('');
 
     useEffect(() => { loadData(); }, [appointmentId, patientId]);
 
@@ -78,12 +89,28 @@ const Atencion = () => {
 
                 if (patientAppts.length > 0) {
                     const latestId = patientAppts[0].id;
-                    // Redirect to the proper URL with the appointment ID
+                    // Redirect to the latest appointment
                     navigate(`/atencion/${latestId}`, { replace: true });
-                    return; // CRITICAL: Stop execution here. The navigate will trigger a new loadData call with the correct ID.
+                    return;
                 } else {
-                    showAlert('El paciente no tiene citas registradas.', 'warning');
-                    navigate(`/pacientes/${patientId}`);
+                    // No appointments: Load patient data only to show history/profile
+                    // Do not redirect to /pacientes
+
+                    // Fetch patient details alone
+                    const patients = await dataService.getPatients();
+                    const p = patients.find(p => String(p.id) === String(patientId));
+                    if (p) {
+                        setPatient(p);
+                        // Load history for this patient
+                        const history = await dataService.getPatientHistory(patientId);
+                        setPatientAppointments(appointments.filter(a => String(a.patientId) === String(patientId)));
+                        // We don't have an appointment, so we can't show appointment details
+                        setAppointment(null);
+                    } else {
+                        showAlert('Paciente no encontrado', 'error');
+                        navigate('/pacientes');
+                    }
+                    setLoading(false);
                     return;
                 }
             }
@@ -314,7 +341,7 @@ const Atencion = () => {
 
         try {
             const settings = await dataService.getSettings();
-            const API_HOST = `http://${window.location.hostname}:5000`;
+            const API_HOST = `http://${window.location.hostname}:3001`;
             const printWindow = window.open('', '_blank');
             const logoUrl = settings.logoUrl ? `${API_HOST}/${settings.logoUrl}` : '';
             const pName = patient.fullName || `${patient.firstName} ${patient.lastName}`;
@@ -333,31 +360,121 @@ const Atencion = () => {
 
             const styles = `
                 <style>
-                    @page { size: landscape; margin: 0; }
+                    @page { 
+                        size: 21.59cm 22.5cm;
+                        margin: 0;
+                    }
                     * { margin: 0; padding: 0; box-sizing: border-box; }
-                    body { font-family: 'Arial', sans-serif; color: #000; font-size: 10pt; line-height: 1.25; }
-                    .page-container { width: 100vw; height: 100vh; display: grid; grid-template-columns: 1fr 1fr; page-break-after: always; }
-                    .exam-half { padding: 10mm; border-right: 1px dashed #999; display: flex; flex-direction: column; position: relative; }
+                    body { font-family: 'Calibri', sans-serif; color: #2F5496; font-size: 10pt; line-height: 1.15; }
+                    .page-container { width: 100vw; min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; page-break-after: always; }
+                    .exam-half { 
+                        padding: 8mm 10mm 10mm 10mm;
+                        border-right: 1px dashed #999; 
+                        display: flex; 
+                        flex-direction: column; 
+                    }
                     .exam-half:last-child { border-right: none; }
-                    .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 8px; }
-                    .doctor-name { font-family: 'Georgia', 'Times New Roman', serif; font-size: 14pt; font-weight: bold; margin-bottom: 2px; letter-spacing: 0.5px; }
-                    .specialty { font-size: 10pt; font-weight: bold; margin-bottom: 1px; }
-                    .registration { font-size: 8pt; margin-bottom: 1px; }
-                    .specialty-desc { font-size: 8pt; font-weight: bold; margin-bottom: 4px; }
-                    .office-info { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; font-size: 7pt; align-items: center; margin-top: 4px; }
-                    .office-left { text-align: left; }
-                    .office-center { text-align: center; }
-                    .office-right { text-align: right; }
-                    .patient-info { background: #f0f0f0; padding: 5px 8px; margin-bottom: 8px; border: 1px solid #999; font-size: 8pt; }
-                    .content-area { border: 2px solid #000; padding: 12px; flex: 1; position: relative; overflow: hidden; min-height: 200px; max-height: 530px; display: flex; flex-direction: column; }
-                    .content-area::before { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 200px; height: 200px; background-image: url('${logoUrl}'); background-size: contain; background-repeat: no-repeat; background-position: center; opacity: 0.06; z-index: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    
+                    /* Header */
+                    .header { 
+                        text-align: center;
+                        /* border-bottom removed */
+                        margin-bottom: 2px;
+                    }
+                    .header-line {
+                        height: 4px;
+                        border-top: 2px solid #2F5496;
+                        border-bottom: 1px solid #2F5496;
+                        margin-bottom: 10px;
+                    }
+                    
+                    .doctor-name { font-family: 'Brush Script MT', cursive; font-size: 26pt; color: #2F5496; margin-bottom: 2px; line-height: 1.2; font-weight: bold; }
+                    .specialty { font-family: 'Calibri', sans-serif; font-size: 11pt; color: #2F5496; margin-bottom: 1px; font-weight: bold; }
+                    .registration { font-family: 'Calibri', sans-serif; font-size: 11pt; color: #2F5496; margin-bottom: 1px; font-weight: bold; }
+                    .specialty-desc { font-family: 'Arial', sans-serif; font-weight: bold; font-size: 11pt; color: #2F5496; margin-bottom: 8px; }
+                    .office-info { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-family: 'Calibri', sans-serif; font-size: 9pt; color: #2F5496; align-items: start; margin-top: 4px; text-align: left; font-weight: bold; }
+                    .office-column { display: flex; flex-direction: column; }
+                    .office-column.right { text-align: right; }
+                    .office-label { font-weight: bold; }
+                    
+                    /* Patient Info */
+                    .patient-info { background: transparent; padding: 0; margin-bottom: 5px; border: none; font-size: 9pt; color: #000; font-weight: bold; font-family: 'Calibri', sans-serif; }
+                    
+                    /* Content Area */
+                    .content-area { 
+                        border: none; 
+                        padding: 0 12px 12px 12px; 
+                        flex: 1; 
+                        position: relative; 
+                        overflow: hidden; 
+                        min-height: 200px; 
+                        max-height: 480px; /* Enforced limit based on page height */
+                        display: flex; 
+                        flex-direction: column; 
+                        color: #000;
+                    }
+                    
+                    /* Watermark */
+                    .content-area::before {
+                        content: '';
+                        position: absolute;
+                        top: 0.5cm;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        width: 6.5cm;
+                        height: 7.5cm;
+                        background-color: #2F5496;
+                        -webkit-mask-image: url('${logoUrl}');
+                        mask-image: url('${logoUrl}');
+                        -webkit-mask-repeat: no-repeat;
+                        mask-repeat: no-repeat;
+                        -webkit-mask-position: center;
+                        mask-position: center;
+                        -webkit-mask-size: contain;
+                        mask-size: contain;
+                        opacity: 0.15;
+                        z-index: 0;
+                        pointer-events: none;
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
+                    }
                     .content-area > * { position: relative; z-index: 1; }
-                    .content-title { font-size: 14pt; font-weight: bold; text-align: center; margin-bottom: 5px; padding-bottom: 4px; border-bottom: 1px solid #000; text-transform: uppercase; }
-                    .exam-details { font-size: 11pt; line-height: 1.4; white-space: pre-wrap; text-align: left; padding-top: 5px; }
-                    .exam-type { font-weight: bold; font-size: 12pt; margin-bottom: 5px; text-decoration: underline; text-align: center; }
-                    .signature-area { margin-top: 50px; text-align: right; }
-                    .signature-box { display: inline-block; border-top: 1px solid #000; min-width: 200px; text-align: center; padding-top: 4px; font-size: 8pt; }
-                    @media print { body { -webkit-print-color-adjust: exact; } }
+                    
+                    .content-title { 
+                        font-family: 'Brush Script MT', cursive; 
+                        font-weight: bold; 
+                        font-size: 16pt; 
+                        color: #2F5496; 
+                        text-align: left; 
+                        margin-bottom: 2px; 
+                        padding-left: 0; 
+                    }
+                    
+                    .exam-details { font-size: 10pt; line-height: 1.4; white-space: pre-wrap; text-align: left; padding-top: 0; }
+                    .exam-type { font-weight: bold; font-size: 11pt; margin-bottom: 2px; }
+                    
+                    .signature-area { margin-top: 40px; text-align: right; page-break-inside: avoid; }
+                    .signature-box { display: inline-block; border-top: 1px solid #000; min-width: 200px; text-align: center; padding-top: 4px; font-size: 8pt; color: #000; }
+                    
+                    /* Pre-printed mode */
+                    body.pre-printed .header, 
+                    body.pre-printed .header-line,
+                    body.pre-printed .print-label,
+                    body.pre-printed .content-title,
+                    body.pre-printed .patient-info { 
+                        visibility: hidden; 
+                    }
+                    body.pre-printed .content-area::before { 
+                        display: none; 
+                    }
+
+                    @media print { 
+                        @page { 
+                            margin: 0; 
+                            size: 21.59cm 22.5cm; 
+                        } 
+                        body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; } 
+                    }
                 </style>
             `;
 
@@ -367,15 +484,45 @@ const Atencion = () => {
                 const exDate = ex.examDate ? ex.examDate.split('-').reverse().join('/') : formattedDate;
                 return `
                         <div class="exam-half">
-                            <div class="header"><div class="doctor-name">Lucrecia Compén Kong</div><div class="specialty">MÉDICO NEURÓLOGO</div><div class="registration">C.M.P. 10837 - R.N.E. 3407</div><div class="specialty-desc">ENFERMEDADES DEL SISTEMA NERVIOSO</div><div class="office-info"><div class="office-left"><strong>Consultorio:</strong><br>Bolívar 276 - Of. 101<br>📞 44 308318 - 949099550</div><div class="office-center"><strong>Lunes a Viernes</strong><br>10 a.m a 1 p.m<br>4 p.m a 8 p.m</div><div class="office-right"><strong>Trujillo</strong><br>Sábados<br>Previa Cita</div></div></div>
-                            <div class="patient-info"><strong>Paciente:</strong> ${pName} (${age} años)<br><strong>Fecha Orden:</strong> ${exDate}</div>
+                            <div class="header">
+                                <div class="doctor-name">Lucrecia Compén Kong</div>
+                                <div class="specialty">MEDICO NEURÓLOGA</div>
+                                <div class="registration">CMP 10837 - RNE 3407</div>
+                                <div class="specialty-desc">ENFERMEDADES DEL SISTEMA NERVIOSO</div>
+                                
+                                <div class="office-info">
+                                    <div class="office-column">
+                                        <div class="office-label">Consultorio</div>
+                                        <div>Bolívar 276 Of 101-Trujillo</div>
+                                        <div>Tel 44-308318 – 949099550</div>
+                                    </div>
+                                    <div class="office-column right">
+                                        <div class="office-label">Lunes a viernes:</div>
+                                        <div>10 am a 12m</div>
+                                        <div>4 pm a 8 pm</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="header-line"></div>
+
+                            <div class="patient-info">
+                                <strong><span class="print-label">Paciente:</span></strong> ${pName} (${age} años)<br>
+                                <strong><span class="print-label">Fecha:</span></strong> ${exDate}
+                            </div>
+                            
                             <div class="content-area">
-                                <div class="content-title">Orden de Examen</div>
+                                <div class="content-title">Indicaciones:</div>
                                 <div class="exam-details">
                                     <div class="exam-type">${ex.type}</div>
                                     <div>${(ex.reason || '').trim().replace(/\n\s*\n/g, '\n')}</div>
                                 </div>
-                                <div class="signature-area"><div class="signature-box"><strong>Firma y Sello</strong><br><small>Dra. Lucrecia Compén Kong</small><br><small>C.M.P. 10837</small></div></div>
+                                <div class="signature-area">
+                                    <div class="signature-box">
+                                        <strong>Firma y Sello</strong><br>
+                                        <small>Dra. Lucrecia Compén Kong</small><br>
+                                        <small>C.M.P. 10837</small>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     `}).join('')}
@@ -383,7 +530,7 @@ const Atencion = () => {
                 </div>
             `).join('');
 
-            printWindow.document.write(`<html><head><title>Orden de Examen</title>${styles}</head><body>${pagesHtml}</body></html>`);
+            printWindow.document.write(`<html><head><title>Orden de Examen</title>${styles}</head><body class="${usePrePrinted ? 'pre-printed' : ''}">${pagesHtml}</body></html>`);
             printWindow.document.close();
             setTimeout(() => { printWindow.print(); }, 500);
 
@@ -459,12 +606,13 @@ const Atencion = () => {
     const handlePrintRxNew = async (rx) => {
         try {
             const settings = await dataService.getSettings();
-            const API_HOST = `http://${window.location.hostname}:5000`;
+            const API_HOST = `http://${window.location.hostname}:3001`;
             const printWindow = window.open('', '_blank');
             const logoUrl = settings.logoUrl ? `${API_HOST}/${settings.logoUrl}` : '';
 
             // 1. Patient Name
             const pName = patient.fullName || `${patient.firstName} ${patient.lastName}`;
+
 
             // 2. Date Logic (Proven Correct)
             const rawDate = rx.prescriptionDate || rx.date;
@@ -491,68 +639,225 @@ const Atencion = () => {
                 <head>
                     <title>Receta Médica</title>
                     <style>
-                        @page { size: landscape; margin: 0; }
+                        @page { size: 21.59cm 22.5cm; margin: 0; }
                         * { margin: 0; padding: 0; box-sizing: border-box; }
-                        body { font-family: 'Arial', sans-serif; color: #000; font-size: 10pt; line-height: 1.25; }
+                        body { font-family: 'Calibri', 'Arial', sans-serif; color: #2F5496; font-size: 10pt; line-height: 1.15; }
                         .page-grid { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; }
-                        .half-page { padding: 10mm; border-right: 1px dashed #999; display: flex; flex-direction: column; }
+                        .half-page { padding: 8mm 10mm 10mm 10mm; border-right: 1px dashed #ccc; display: flex; flex-direction: column; }
                         .half-page:last-child { border-right: none; }
-                        .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 8px; }
-                        .doctor-name { font-family: 'Georgia', 'Times New Roman', serif; font-size: 14pt; font-weight: bold; margin-bottom: 2px; letter-spacing: 0.5px; }
-                        .specialty { font-size: 10pt; font-weight: bold; margin-bottom: 1px; }
-                        .registration { font-size: 8pt; margin-bottom: 1px; }
-                        .specialty-desc { font-size: 8pt; font-weight: bold; margin-bottom: 4px; }
-                        .office-info { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; font-size: 7pt; align-items: center; margin-top: 4px; }
-                        .office-left { text-align: left; }
-                        .office-center { text-align: center; }
-                        .office-right { text-align: right; }
-                        .patient-info { background: #f0f0f0; padding: 5px 8px; margin-bottom: 8px; border: 1px solid #999; font-size: 8pt; }
-                        .content-area { border: 2px solid #000; padding: 12px; flex: 1; position: relative; overflow: hidden; min-height: 200px; max-height: 530px; }
-                        .content-area::before { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 200px; height: 200px; background-image: url('${logoUrl}'); background-size: contain; background-repeat: no-repeat; background-position: center; opacity: 0.06; z-index: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                        .content-area > * { position: relative; z-index: 1; }
-                        .content-title { font-size: 14pt; font-weight: bold; text-align: center; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #000; }
-                        .med-list { list-style: none; padding: 0; }
+                        .header { text-align: center; margin-bottom: 5px; }
+                        
+                        /* Name - Brush Script MT - Size 26 */
+                        .doctor-name { 
+                            font-family: 'Brush Script MT', 'Brush Script Std', cursive; 
+                            font-size: 26pt; 
+                            color: #2F5496; 
+                            margin-bottom: 2px;
+                            line-height: 1.1;
+                        }
+                        
+                        /* Medico Neurologa / CMP - Calibri - Size 11 */
+                        .specialty-info {
+                            font-family: 'Calibri', 'Arial', sans-serif;
+                            font-size: 11pt;
+                            font-weight: bold;
+                            color: #2F5496;
+                            margin-bottom: 2px;
+                            text-transform: uppercase;
+                        }
+
+                        /* Disease Subtitle - Arial Bold - Size 11 */
+                        .disease-subtitle {
+                            font-family: 'Arial', sans-serif;
+                            font-weight: bold;
+                            font-size: 11pt;
+                            color: #2F5496;
+                            margin-bottom: 12px;
+                            text-transform: uppercase;
+                        }
+
+                        /* Footer Info - Calibri - Size 9 */
+                        .footer-info {
+                            display: flex;
+                            justify-content: space-between;
+                            font-family: 'Calibri', 'Arial', sans-serif;
+                            font-size: 9pt;
+                            font-weight: bold; /* Bold everything in footer */
+                            color: #2F5496;
+                            border-bottom: 2px solid #2F5496; /* Double line effect part 1 */
+                            padding-bottom: 2px;
+                            margin-bottom: 2px;
+                        }
+                        
+                        .footer-info-bottom-border {
+                            border-top: 1px solid #2F5496; /* Double line effect part 2 */
+                            height: 2px;
+                            width: 100%;
+                            margin-bottom: 10px;
+                        }
+
+                        .info-col { flex: 1; }
+                        .info-left { text-align: left; }
+                        .info-right { text-align: right; }
+                        
+                        .info-label { font-weight: bold; }
+
+                        .content-area { flex: 1; position: relative; padding-top: 10px; }
+                        
+                        /* Rp / Indicaciones - Brush Script MT Bold - Size 14 */
+                        .section-title {
+                            font-family: 'Brush Script MT', 'Brush Script Std', cursive;
+                            font-size: 16pt; /* Increased to 16 to be more visible like 14 bold */
+                            font-weight: bold;
+                            color: #2F5496;
+                            margin-bottom: 10px;
+                        }
+
+                        .med-list { list-style: none; padding: 0; color: #000; }
                         .med-item { margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px dotted #ccc; }
                         .med-item:last-child { border-bottom: none; }
                         .med-name { font-weight: bold; font-size: 10pt; display: block; margin-bottom: 2px; }
-                        .med-details { font-size: 8pt; color: #333; margin-left: 6px; }
-                        .instructions-content { font-size: 9pt; line-height: 1.4; white-space: pre-line; word-wrap: break-word; }
-                        .signature-area { margin-top: auto; padding-top: 100px; text-align: right; }
-                        .signature-box { display: inline-block; border-top: 1px solid #000; min-width: 200px; text-align: center; padding-top: 4px; font-size: 8pt; }
-                        @media print { @page { margin: 0; size: landscape; } body { margin: 0; padding: 0; } }
+                        .med-details { font-size: 9pt; color: #333; margin-left: 6px; }
+                        
+                        .instructions-content { 
+                            font-family: 'Calibri', 'Arial', sans-serif;
+                            font-size: 10pt; 
+                            color: #000;
+                            line-height: 1.4; 
+                            white-space: pre-line; 
+                        }
+
+                        .signature-area { margin-top: auto; padding-top: 80px; text-align: right; }
+                        .signature-box { display: inline-block; border-top: 1px solid #000; min-width: 200px; text-align: center; padding-top: 4px; font-size: 9pt; color: #000; }
+                        
+                        /* Watermark */
+                        .content-area::before {
+                            content: '';
+                            position: absolute;
+                            top: 1.5cm;
+                            left: 50%;
+                            transform: translateX(-50%);
+                            width: 6.5cm;
+                            height: 7.5cm;
+                            background-color: #2F5496;
+                            -webkit-mask-image: url('${logoUrl}');
+                            mask-image: url('${logoUrl}');
+                            -webkit-mask-repeat: no-repeat;
+                            mask-repeat: no-repeat;
+                            -webkit-mask-position: center;
+                            mask-position: center;
+                            -webkit-mask-size: contain;
+                            mask-size: contain;
+                            opacity: 0.15;
+                            z-index: 0;
+                            pointer-events: none;
+                            -webkit-print-color-adjust: exact;
+                            print-color-adjust: exact;
+                        }
+                        
+                        .content-area > * { position: relative; z-index: 1; }
+
+
+                        /* Pre-printed mode */
+                        body.pre-printed .header, 
+                        body.pre-printed .header-line,
+                        body.pre-printed .print-label,
+                        body.pre-printed .content-title,
+                        body.pre-printed .section-title,
+                        body.pre-printed .patient-info { 
+                            visibility: hidden; 
+                        }
+                        body.pre-printed .content-area::before { 
+                            display: none; 
+                        }
+
+                        @media print { @page { margin: 0; size: 21.59cm 22.5cm; } body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; } }
                     </style>
                 </head>
-                <body>
+                <body class="${usePrePrinted ? 'pre-printed' : ''}">
                     <div class="page-grid">
                         <!-- LEFT: MEDICATIONS -->
                         <div class="half-page">
-                            <div class="header"><div class="doctor-name">Lucrecia Compén Kong</div><div class="specialty">MÉDICO NEURÓLOGO</div><div class="registration">C.M.P. 10837 - R.N.E. 3407</div><div class="specialty-desc">ENFERMEDADES DEL SISTEMA NERVIOSO</div><div class="office-info"><div class="office-left"><strong>Consultorio:</strong><br>Bolívar 276 - Of. 101<br>📞 44 308318 - 949099550</div><div class="office-center"><strong>Lunes a Viernes</strong><br>10 a.m a 1 p.m<br>4 p.m a 8 p.m</div><div class="office-right"><strong>Trujillo</strong><br>Sábados<br>Previa Cita</div></div></div>
-                            <div class="patient-info"><strong>Paciente:</strong> ${pName}<br><strong>Fecha:</strong> ${formattedDate}</div>
+                            <div class="header">
+                                <div class="doctor-name">Lucrecia Compén Kong</div>
+                                <div class="specialty-info">MEDICO NEURÓLOGA</div>
+                                <div class="specialty-info">CMP 10837 - RNE 3407</div>
+                                <div class="disease-subtitle">ENFERMEDADES DEL SISTEMA NERVIOSO</div>
+                                
+                                <div class="footer-info">
+                                    <div class="info-col info-left">
+                                        <div class="info-label">Consultorio</div>
+                                        <div>Bolívar 276 Of 101-Trujillo</div>
+                                        <div>Tel 44-308318 – 949099550</div>
+                                    </div>
+                                    <div class="info-col info-right">
+                                        <div class="info-label">Lunes a viernes:</div>
+                                        <div>10 am a 12m</div>
+                                        <div>4 pm a 8 pm</div>
+                                    </div>
+                                </div>
+                                <div class="footer-info-bottom-border"></div>
+                            </div>
+
+                            <div class="patient-info" style="margin-bottom: 2px; font-size: 10pt; color: #000;">
+                                <strong><span class="print-label">Paciente:</span></strong> ${pName}
+                            </div>
+                            <div class="patient-info" style="margin-bottom: 10px; font-size: 10pt; color: #000;">
+                                <strong><span class="print-label">Fecha:</span></strong> ${formattedDate}
+                            </div>
+
                             <div class="content-area">
-                                <div class="content-title">Rp.</div>
+                                <div class="section-title">Rp.</div>
                                 <ul class="med-list">
-                                    ${JSON.parse(rx.medications || '[]').map(m => `
-                                        <li class="med-item"><span class="med-name">${m.name} ${m.dose || ''}</span><div class="med-details">${m.freq || ''}</div></li>
-                                    `).join('')}
+                                    ${JSON.parse(rx.medications || '[]').map(m => {
+                const details = [m.freq, m.duration].filter(Boolean).join(' • ');
+                return `<li class="med-item"><span class="med-name">${m.name} ${m.dose || ''}</span>${details ? `<div class="med-details">${details}</div>` : ''}</li>`;
+            }).join('')}
                                 </ul>
-                                <div class="signature-area"><div class="signature-box"><strong>Firma y Sello</strong><br><small>Dra. Lucrecia Compén Kong</small><br><small>C.M.P. 10837</small></div></div>
+                                <div class="signature-area"><div class="signature-box"><strong>Firma y Sello</strong><br>Dra. Lucrecia Compén Kong<br>C.M.P. 10837</div></div>
                             </div>
                         </div>
                         
                         <!-- RIGHT: INSTRUCTIONS -->
                         <div class="half-page">
-                            <div class="header"><div class="doctor-name">Lucrecia Compén Kong</div><div class="specialty">MÉDICO NEURÓLOGO</div><div class="registration">C.M.P. 10837 - R.N.E. 3407</div><div class="specialty-desc">ENFERMEDADES DEL SISTEMA NERVIOSO</div><div class="office-info"><div class="office-left"><strong>Consultorio:</strong><br>Bolívar 276 - Of. 101<br>📞 44 308318 - 949099550</div><div class="office-center"><strong>Lunes a Viernes</strong><br>10 a.m a 1 p.m<br>4 p.m a 8 p.m</div><div class="office-right"><strong>Trujillo</strong><br>Sábados<br>Previa Cita</div></div></div>
-                            <div class="patient-info"><strong>Paciente:</strong> ${pName}<br><strong>Fecha:</strong> ${formattedDate}</div>
+                            <div class="header">
+                                <div class="doctor-name">Lucrecia Compén Kong</div>
+                                <div class="specialty-info">MEDICO NEURÓLOGA</div>
+                                <div class="specialty-info">CMP 10837 - RNE 3407</div>
+                                <div class="disease-subtitle">ENFERMEDADES DEL SISTEMA NERVIOSO</div>
+                                
+                                <div class="footer-info">
+                                    <div class="info-col info-left">
+                                        <div class="info-label">Consultorio</div>
+                                        <div>Bolívar 276 Of 101-Trujillo</div>
+                                        <div>Tel 44-308318 – 949099550</div>
+                                    </div>
+                                    <div class="info-col info-right">
+                                        <div class="info-label">Lunes a viernes:</div>
+                                        <div>10 am a 12m</div>
+                                        <div>4 pm a 8 pm</div>
+                                    </div>
+                                </div>
+                                <div class="footer-info-bottom-border"></div>
+                            </div>
+
+                            <div class="patient-info" style="margin-bottom: 2px; font-size: 10pt; color: #000;">
+                                <strong><span class="print-label">Paciente:</span></strong> ${pName}
+                            </div>
+                            <div class="patient-info" style="margin-bottom: 10px; font-size: 10pt; color: #000;">
+                                <strong><span class="print-label">Fecha:</span></strong> ${formattedDate}
+                            </div>
+
                             <div class="content-area">
-                                <div class="content-title">Indicaciones</div>
+                                <div class="section-title">Indicaciones:</div>
                                 <div class="instructions-content">${(rx.instructions || '').trim()}</div>
-                                <div class="signature-area"><div class="signature-box"><strong>Firma y Sello</strong><br><small>Dra. Lucrecia Compén Kong</small><br><small>C.M.P. 10837</small></div></div>
                             </div>
                         </div>
                     </div>
                 </body>
                 </html>
             `;
+
 
             printWindow.document.write(content);
             printWindow.document.close();
@@ -561,7 +866,423 @@ const Atencion = () => {
         } catch (error) { console.error(error); showAlert('Error al imprimir', 'error'); }
     };
 
-    if (loading || !appointment) return <div className="h-screen flex items-center justify-center text-gray-500 font-medium text-lg">Cargando datos...</div>;
+    const handlePrintHistory = async () => {
+        if (!historyStartDate || !historyEndDate) {
+            showAlert('Seleccione un rango de fechas', 'warning');
+            return;
+        }
+
+        // Filter appointments using string comparison for reliability with timezones (Peru)
+        const filteredAppts = patientAppointments.filter(a => {
+            // "a.date" is already in yyyy-mm-dd format
+            const apptDateStr = a.date;
+            // historyStartDate/EndDate are from <input type="date"> which returns yyyy-mm-dd
+            return apptDateStr >= historyStartDate && apptDateStr <= historyEndDate;
+        }).sort((a, b) => a.date.localeCompare(b.date));
+
+        if (filteredAppts.length === 0) {
+            setHistoryError('No se encontraron atenciones en el período seleccionado');
+            return;
+        }
+
+        setHistoryError('');
+
+        // Open window IMMEDIATELY to avoid popup blockers (browsers require user gesture)
+        const printWindow = window.open('', 'ImprimirHistoria', 'height=800,width=1200');
+        if (printWindow) {
+            printWindow.document.write('<html><head><title>Generando...</title></head><body style="font-family:sans-serif; display:flex; align-items:center; justify-content:center; height:100vh;"><h2>Generando historia clínica, por favor espere...</h2></body></html>');
+            printWindow.document.close();
+        }
+
+        try {
+            showAlert('Generando historia clínica...', 'info');
+
+            const calculateAge = (birthDate) => {
+                if (!birthDate) return 'N/A';
+                const today = new Date();
+                const birth = new Date(birthDate);
+                let age = today.getFullYear() - birth.getFullYear();
+                const m = today.getMonth() - birth.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+                return age;
+            };
+
+            // Fetch full details for each
+            const fullHistory = await Promise.all(filteredAppts.map(async (a) => {
+                try {
+                    return await dataService.getAppointmentFullDetails(a.id);
+                } catch (e) {
+                    console.error("Error details", e);
+                    return a; // Fallback to basic info
+                }
+            }));
+
+            const settings = await dataService.getSettings();
+
+            if (!printWindow || printWindow.closed) {
+                showAlert('La ventana de impresión fue bloqueada o cerrada', 'error');
+                return;
+            }
+
+            // HTML Generation
+            const content = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Historia Clínica - ${patient.fullName}</title>
+                    <style>
+                        @page { size: A4 portrait; margin: 0; }
+                        * { box-sizing: border-box; -webkit-print-color-adjust: exact; }
+                        html, body { 
+                            margin: 0 !important;
+                            padding: 0 !important;
+                            background: white !important;
+                            width: 210mm; /* Force A4 width */
+                            height: auto !important;
+                            overflow: visible !important;
+                            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+                            font-size: 11pt; 
+                            color: #0f172a; 
+                        }
+                        
+                        .page-container {
+                            width: 210mm;
+                            padding: 20mm 15mm; /* FORCE MARGINS HERE */
+                            margin: 0 auto;
+                            display: flex;
+                            flex-direction: column;
+                            position: relative;
+                            background: white;
+                        }
+
+                        /* Page Break per Attention */
+                        .attention-page {
+                            page-break-after: always;
+                            break-after: page;
+                            background: white;
+                            width: 210mm;
+                            position: relative;
+                        }
+                        .attention-page:last-child {
+                            page-break-after: auto;
+                            break-after: auto;
+                        }
+
+                        .dr-header {
+                            text-align: center;
+                            margin-bottom: 5px;
+                        }
+                        .doctor-name { 
+                            font-family: 'Brush Script MT', 'Brush Script Std', cursive; 
+                            font-size: 26pt; 
+                            color: #2F5496; 
+                            margin-bottom: 2px;
+                            line-height: 1.1;
+                        }
+                        .specialty-info {
+                            font-family: 'Calibri', 'Arial', sans-serif;
+                            font-size: 11pt;
+                            font-weight: bold;
+                            color: #2F5496;
+                            margin-bottom: 2px;
+                            text-transform: uppercase;
+                        }
+                        .disease-subtitle {
+                            font-family: 'Arial', sans-serif;
+                            font-weight: bold;
+                            font-size: 11pt;
+                            color: #2F5496;
+                            margin-bottom: 12px;
+                            text-transform: uppercase;
+                        }
+                        .footer-info {
+                            display: flex;
+                            justify-content: space-between;
+                            font-family: 'Calibri', 'Arial', sans-serif;
+                            font-size: 9pt;
+                            font-weight: bold;
+                            color: #2F5496;
+                            border-bottom: 2px solid #2F5496;
+                            padding-bottom: 2px;
+                            margin-bottom: 2px;
+                        }
+                        .footer-info-bottom-border {
+                            border-top: 1px solid #2F5496;
+                            height: 2px;
+                            width: 100%;
+                            margin-bottom: 15px;
+                        }
+                        .info-col { flex: 1; }
+                        .info-left { text-align: left; }
+                        .info-right { text-align: right; }
+                        .info-label { font-weight: bold; }
+
+                        /* Patient Info banner */
+                        .patient-info-box {
+                            display: grid;
+                            grid-template-columns: 1fr 1fr;
+                            gap: 12px;
+                            background-color: #f1f5f9;
+                            padding: 12px 18px;
+                            border-radius: 12px;
+                            margin-bottom: 20px;
+                            border: 1px solid #cbd5e1;
+                        }
+                        .data-row {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 2px;
+                        }
+                        .data-label {
+                            font-size: 8pt;
+                            font-weight: 900;
+                            color: #64748b;
+                            text-transform: uppercase;
+                        }
+                        .data-value {
+                            font-size: 11pt;
+                            font-weight: 700;
+                            color: #1e293b;
+                        }
+
+                        /* Date Banner */
+                        .date-marker {
+                            font-size: 15pt;
+                            font-weight: 900;
+                            color: #2F5496;
+                            margin-bottom: 12px;
+                            border-left: 6px solid #2F5496;
+                            padding-left: 12px;
+                        }
+
+                        /* Sections */
+                        .print-section {
+                            margin-bottom: 20px;
+                            border: 1px solid #e2e8f0;
+                            border-radius: 14px;
+                            background: white;
+                            overflow: hidden;
+                        }
+                        .section-head {
+                            background-color: #f8fafc;
+                            border-bottom: 1px solid #e2e8f0;
+                            padding: 8px 15px;
+                        }
+                        .section-label {
+                            font-size: 9pt;
+                            font-weight: 900;
+                            color: #334155;
+                            text-transform: uppercase;
+                            margin: 0;
+                        }
+                        .section-body {
+                            padding: 15px;
+                        }
+                        .content-txt {
+                            font-size: 11pt;
+                            color: #1e293b;
+                            white-space: pre-line;
+                            text-align: justify;
+                            line-height: 1.4;
+                        }
+                        .dg-pill {
+                            background-color: #eff6ff;
+                            color: #2F5496;
+                            padding: 10px 15px;
+                            border-radius: 10px;
+                            font-weight: 800;
+                            border: 1.5px solid #bfdbfe;
+                            font-size: 11pt;
+                        }
+                        .item-row {
+                            padding: 6px 0;
+                            border-bottom: 1px dashed #cbd5e1;
+                            display: flex;
+                            align-items: flex-start;
+                            gap: 10px;
+                        }
+                        .item-row:last-child { border-bottom: none; }
+                        .dot { color: #2F5496; font-size: 12pt; margin-top: -2px; }
+
+                        /* Pre-printed mode override */
+                        .pre-printed .dr-header {
+                            visibility: hidden;
+                            margin-bottom: 50mm; /* Reserve space for header */
+                        }
+
+                    </style>
+                </head>
+                <body class="${usePrePrinted ? 'pre-printed' : ''}" style="margin: 0; padding: 0; height: auto;">
+                    ${fullHistory.map(h => {
+                const appt = h.appointment || h;
+                const rawDate = appt.date || appt.appointment_date;
+                let dateStr = 'Fecha Pendiente';
+
+                if (rawDate) {
+                    const dParts = String(rawDate).split('T')[0].split('-');
+                    if (dParts.length === 3) {
+                        const d = new Date(dParts[0], dParts[1] - 1, dParts[2]);
+                        dateStr = d.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                    }
+                }
+
+                const currentHistory = h.history?.find(note => String(note.appointmentId) === String(appt.id));
+                const historyText = currentHistory?.notes || '';
+                const diagnosisText = appt.diagnosis || '';
+
+                return `
+                        <div class="attention-page">
+                            <div class="page-container">
+                                <div class="dr-header">
+                                    <div class="doctor-name">Lucrecia Compén Kong</div>
+                                    <div class="specialty-info">MEDICO NEURÓLOGA</div>
+                                    <div class="specialty-info">CMP 10837 - RNE 3407</div>
+                                    <div class="disease-subtitle">ENFERMEDADES DEL SISTEMA NERVIOSO</div>
+                                    
+                                    <div class="footer-info">
+                                        <div class="info-col info-left">
+                                            <div class="info-label">Consultorio</div>
+                                            <div>Bolívar 276 Of 101-Trujillo</div>
+                                            <div>Tel 44-308318 – 949099550</div>
+                                        </div>
+                                        <div class="info-col info-right">
+                                            <div class="info-label">Lunes a viernes:</div>
+                                            <div>10 am a 12m</div>
+                                            <div>4 pm a 8 pm</div>
+                                        </div>
+                                    </div>
+                                    <div class="footer-info-bottom-border"></div>
+                                </div>
+
+                                <div class="patient-info-box">
+                                    <div class="data-row">
+                                        <span class="data-label">Paciente</span>
+                                        <span class="data-value">${patient.fullName}</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="data-label">${patient.documentType || 'DNI'}</span>
+                                        <span class="data-value">${patient.documentNumber || patient.dni}</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="data-label">Edad / HC</span>
+                                        <span class="data-value">${calculateAge(patient.birthDate)} años / HC: ${patient.clinicalHistoryNumber || 'S/N'}</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="data-label">Tipo de Atención</span>
+                                        <span class="data-value">${appt.type || 'Consulta'}</span>
+                                    </div>
+                                </div>
+
+                                <div class="date-marker">
+                                    Atención: ${dateStr.charAt(0).toUpperCase() + dateStr.slice(1)}
+                                </div>
+
+                                <div class="content-sections">
+                                    ${(printIncludeHistory && historyText && historyText.trim() && historyText !== 'undefined') ? `
+                                        <div class="print-section">
+                                            <div class="section-head"><h3 class="section-label">Evolución Clínica / Anamnesis</h3></div>
+                                            <div class="section-body">
+                                                <div class="content-txt">${historyText}</div>
+                                            </div>
+                                        </div>
+                                    ` : ''}
+                                    
+                                    ${(printIncludeDiagnosis && diagnosisText && diagnosisText.trim() && diagnosisText !== 'undefined') ? `
+                                        <div class="print-section">
+                                            <div class="section-head"><h3 class="section-label">Diagnóstico</h3></div>
+                                            <div class="section-body">
+                                                <div class="dg-pill">${diagnosisText}</div>
+                                            </div>
+                                        </div>
+                                    ` : ''}
+
+                                    ${(() => {
+                        if (!printIncludeExams || !h.exams) return '';
+                        const validExams = h.exams.filter(ex => ex.type && String(ex.type) !== 'undefined');
+                        if (validExams.length === 0) return '';
+                        return `
+                                            <div class="print-section">
+                                                <div class="section-head"><h3 class="section-label">Exámenes Auxiliares</h3></div>
+                                                <div class="section-body">
+                                                    ${validExams.map(ex => `
+                                                        <div class="item-row">
+                                                            <span class="dot">▶</span>
+                                                            <span>${ex.type}</span>
+                                                        </div>
+                                                    `).join('')}
+                                                </div>
+                                            </div>
+                                        `;
+                    })()}
+
+                                    ${(() => {
+                        if (!printIncludeRx || !h.prescriptions) return '';
+                        const validRxs = h.prescriptions.filter(p => (p.medication || p.name) && String(p.medication || p.name) !== 'undefined');
+                        if (validRxs.length === 0) return '';
+                        return `
+                                            <div class="print-section">
+                                                <div class="section-head"><h3 class="section-label">Receta Médica</h3></div>
+                                                <div class="section-body">
+                                                    ${validRxs.map(p => {
+                            const med = p.medication || p.name;
+                            const d = p.dosage || p.dose;
+                            const f = p.frequency || p.freq;
+                            const dur = p.duration;
+
+                            const details = [d, f, dur]
+                                .map(v => String(v).trim())
+                                .filter(v => v && v !== 'undefined' && v !== 'null')
+                                .join(' - ');
+
+                            return `
+                                                            <div class="item-row">
+                                                                <span class="dot">▶</span>
+                                                                <strong>${med}</strong> 
+                                                                ${details ? `<span style="color: #64748b; margin-left:12px;">(${details})</span>` : ''}
+                                                            </div>
+                                                        `;
+                        }).join('')}
+                                                </div>
+                                            </div>
+                                        `;
+                    })()}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+            }).join('')}
+                    <script>
+                        window.onload = function() {
+                            setTimeout(function() { 
+                                window.print();
+                                // window.close(); // Opcional
+                            }, 500);
+                        }
+                    </script>
+                </body>
+                </html>
+            `;
+
+            printWindow.document.open();
+            printWindow.document.write(content);
+            printWindow.document.close();
+            setHistoryModalOpen(false);
+
+            // Additional focus as fallback
+            setTimeout(() => {
+                if (printWindow && !printWindow.closed) {
+                    printWindow.focus();
+                }
+            }, 1000);
+
+        } catch (error) {
+            console.error(error);
+            showAlert('Error al generar historia', 'error');
+            if (printWindow) printWindow.close();
+        }
+    };
+
+    if (loading || (!appointment && !patient)) return <div className="h-screen flex items-center justify-center text-gray-500 font-medium text-lg">Cargando datos...</div>;
 
     return (
         <div className="p-3 max-w-[1600px] mx-auto min-h-screen flex flex-col gap-0" onClick={() => setActiveSection(null)}>
@@ -585,43 +1306,71 @@ const Atencion = () => {
                 </div>
                 <div className="flex items-center gap-4">
                     <button
-                        onClick={() => setTriageModalOpen(true)}
-                        style={{
-                            padding: '10px 15px',
-                            gap: '8px',
-                            backgroundColor: triage ? '#f0fdf4' : '#ffffff',
-                            color: triage ? '#166534' : '#374151',
-                            border: triage ? '1px solid #bbf7d0' : '1px solid #e5e7eb'
-                        }}
-                        className="text-sm font-semibold rounded-lg flex items-center transition-all hover:bg-gray-50 shadow-sm"
+                        onClick={() => setHistoryModalOpen(true)}
+                        className="rounded-lg shadow-sm flex items-center transition-all font-bold"
+                        style={{ padding: '10px 15px', gap: '8px', backgroundColor: 'rgb(239, 246, 255)', color: 'rgb(30, 64, 175)', border: '1px solid rgb(191, 219, 254)' }}
+                        title="Imprimir Historia Clínica"
                     >
-                        <Activity size={18} className={triage ? 'text-green-600' : 'text-gray-400'} />
-                        {triage ? (
-                            <div className="flex flex-col items-start leading-tight">
-                                <span className="text-xs uppercase font-bold opacity-70">Triaje Realizado</span>
-                                <span className="text-sm">
-                                    {triage.systolic}/{triage.diastolic} <small>mmHg</small>
-                                    {triage.oxygenSaturation ? ` • ${triage.oxygenSaturation}% SpO2` : ''}
-                                </span>
-                            </div>
-                        ) : 'Tomar Triaje'}
+                        <Printer size={20} />
+                        <span className="text-sm">Imprimir Historia</span>
                     </button>
 
-                    <button
-                        onClick={handleFinish}
-                        disabled={appointment?.status === 'Realizado'}
-                        style={{
-                            padding: '10px 20px',
-                            gap: '8px',
-                            backgroundColor: appointment?.status === 'Realizado' ? '#9ca3af' : '#16a34a',
-                            color: 'white',
-                            cursor: appointment?.status === 'Realizado' ? 'default' : 'pointer'
-                        }}
-                        className={`text-sm font-bold rounded-lg flex items-center shadow-lg transition-all ${appointment?.status !== 'Realizado' ? 'hover:bg-green-700 active:transform active:scale-95' : ''}`}
-                    >
-                        <CheckCircle size={20} />
-                        {appointment?.status === 'Realizado' ? 'ATENCIÓN REALIZADA' : 'FINALIZAR ATENCIÓN'}
-                    </button>
+                    {!appointment ? (
+                        <button
+                            onClick={() => navigate('/agenda', { state: { patientId: patient.id } })}
+                            style={{
+                                padding: '10px 20px',
+                                gap: '8px',
+                                backgroundColor: '#3b82f6',
+                                color: 'white'
+                            }}
+                            className="text-sm font-bold rounded-lg flex items-center shadow-lg transition-all hover:bg-blue-700 active:transform active:scale-95"
+                        >
+                            <CalendarClock size={20} />
+                            CITAR PACIENTE
+                        </button>
+                    ) : (
+                        <>
+                            <button
+                                onClick={() => setTriageModalOpen(true)}
+                                style={{
+                                    padding: '10px 15px',
+                                    gap: '8px',
+                                    backgroundColor: triage ? '#f0fdf4' : '#ffffff',
+                                    color: triage ? '#166534' : '#374151',
+                                    border: triage ? '1px solid #bbf7d0' : '1px solid #e5e7eb'
+                                }}
+                                className="text-sm font-semibold rounded-lg flex items-center transition-all hover:bg-gray-50 shadow-sm"
+                            >
+                                <Activity size={18} className={triage ? 'text-green-600' : 'text-gray-400'} />
+                                {triage ? (
+                                    <div className="flex flex-col items-start leading-tight">
+                                        <span className="text-xs uppercase font-bold opacity-70">Triaje Realizado</span>
+                                        <span className="text-sm">
+                                            {triage.systolic}/{triage.diastolic} <small>mmHg</small>
+                                            {triage.oxygenSaturation ? ` • ${triage.oxygenSaturation}% SpO2` : ''}
+                                        </span>
+                                    </div>
+                                ) : 'Tomar Triaje'}
+                            </button>
+
+                            <button
+                                onClick={handleFinish}
+                                disabled={appointment?.status === 'Realizado'}
+                                style={{
+                                    padding: '10px 20px',
+                                    gap: '8px',
+                                    backgroundColor: appointment?.status === 'Realizado' ? '#9ca3af' : '#16a34a',
+                                    color: 'white',
+                                    cursor: appointment?.status === 'Realizado' ? 'default' : 'pointer'
+                                }}
+                                className={`text-sm font-bold rounded-lg flex items-center shadow-lg transition-all ${appointment?.status !== 'Realizado' ? 'hover:bg-green-700 active:transform active:scale-95' : ''}`}
+                            >
+                                <CheckCircle size={20} />
+                                {appointment?.status === 'Realizado' ? 'ATENCIÓN REALIZADA' : 'FINALIZAR ATENCIÓN'}
+                            </button>
+                        </>
+                    )}
                 </div>
             </header>
 
@@ -705,18 +1454,20 @@ const Atencion = () => {
                     {/* Evolution Note */}
                     <div onClick={(e) => { e.stopPropagation(); setActiveSection('evolution'); }} className={`transition-all duration-300 bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col overflow-hidden ${activeSection === 'evolution' ? 'flex-[3]' : (activeSection === 'diagnosis' ? 'flex-1' : 'flex-[1.2]')}`}>
                         <div style={{ padding: '5px' }} className="bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-                            <span className="flex items-center gap-2 text-sm font-bold text-gray-700 uppercase tracking-wide"><FileText size={18} className="text-blue-600" /> Evolución Clínica</span>
+                            <span className="flex items-center gap-2 text-sm font-bold text-gray-700 uppercase tracking-wide"><FileText size={18} className="text-blue-600" /> Historia Clínica</span>
                             <div className="flex gap-2">
-                                {historyId && !editingHistory && (
-                                    <button onClick={(e) => { e.stopPropagation(); setEditingHistory(true); }} className="text-amber-600 hover:text-amber-800 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded hover:bg-amber-50 transition-colors flex items-center gap-1">
-                                        <Edit size={14} /> Editar
-                                    </button>
-                                )}
-                                {(editingHistory || !historyId) && (
-                                    <button onClick={handleSaveHistory} className="text-blue-600 hover:text-blue-800 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded hover:bg-blue-50 transition-colors">
-                                        {historyId ? 'Actualizar' : 'Guardar'}
-                                    </button>
-                                )}
+                                <div className="flex gap-2">
+                                    {appointment && historyId && !editingHistory && (
+                                        <button onClick={(e) => { e.stopPropagation(); setEditingHistory(true); }} className="text-amber-600 hover:text-amber-800 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded hover:bg-amber-50 transition-colors flex items-center gap-1">
+                                            <Edit size={14} /> Editar
+                                        </button>
+                                    )}
+                                    {appointment && (editingHistory || !historyId) && (
+                                        <button onClick={handleSaveHistory} className="text-blue-600 hover:text-blue-800 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded hover:bg-blue-50 transition-colors">
+                                            {historyId ? 'Actualizar' : 'Guardar'}
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                         <div className="relative flex-1">
@@ -727,7 +1478,8 @@ const Atencion = () => {
                                 value={historyText}
                                 onChange={e => setHistoryText(e.target.value)}
                                 maxLength={2000}
-                                readOnly={!!(historyId && !editingHistory)}
+                                readOnly={!!(historyId && !editingHistory) || !appointment}
+                                disabled={!appointment}
                             />
                             <span style={{ position: 'absolute', bottom: '8px', right: '8px', fontSize: '0.7rem', color: (historyText?.length || 0) > 1800 ? 'var(--danger)' : 'var(--text-muted)' }}>
                                 {historyText?.length || 0}/2000
@@ -740,16 +1492,18 @@ const Atencion = () => {
                         <div style={{ padding: '5px' }} className="bg-amber-50 border-b border-amber-100 flex justify-between items-center">
                             <span className="flex items-center gap-2 text-sm font-bold text-amber-800 uppercase tracking-wide"><AlertCircle size={18} /> Diagnóstico Principal</span>
                             <div className="flex gap-2">
-                                {diagnosisText && !editingDiagnosis && (
-                                    <button onClick={(e) => { e.stopPropagation(); setEditingDiagnosis(true); }} className="text-amber-700 hover:text-amber-900 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded hover:bg-amber-100 transition-colors flex items-center gap-1">
-                                        <Edit size={14} /> Editar
-                                    </button>
-                                )}
-                                {(editingDiagnosis || !diagnosisText) && (
-                                    <button onClick={handleSaveDiagnosis} className="text-amber-700 hover:text-amber-900 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded hover:bg-amber-100 transition-colors">
-                                        {diagnosisText ? 'Actualizar' : 'Guardar'}
-                                    </button>
-                                )}
+                                <div className="flex gap-2">
+                                    {appointment && diagnosisText && !editingDiagnosis && (
+                                        <button onClick={(e) => { e.stopPropagation(); setEditingDiagnosis(true); }} className="text-amber-700 hover:text-amber-900 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded hover:bg-amber-100 transition-colors flex items-center gap-1">
+                                            <Edit size={14} /> Editar
+                                        </button>
+                                    )}
+                                    {appointment && (editingDiagnosis || !diagnosisText) && (
+                                        <button onClick={handleSaveDiagnosis} className="text-amber-700 hover:text-amber-900 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded hover:bg-amber-100 transition-colors">
+                                            {diagnosisText ? 'Actualizar' : 'Guardar'}
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                         <div className="relative flex-1">
@@ -760,7 +1514,8 @@ const Atencion = () => {
                                 value={diagnosisText}
                                 onChange={e => setDiagnosisText(e.target.value)}
                                 maxLength={1000}
-                                readOnly={!!(diagnosisText && !editingDiagnosis)}
+                                readOnly={!!(diagnosisText && !editingDiagnosis) || !appointment}
+                                disabled={!appointment}
                             />
                             <span style={{ position: 'absolute', bottom: '8px', right: '8px', fontSize: '0.7rem', color: (diagnosisText?.length || 0) > 900 ? 'var(--danger)' : 'var(--text-muted)' }}>
                                 {diagnosisText?.length || 0}/1000
@@ -773,6 +1528,25 @@ const Atencion = () => {
                 <div
                     className={`flex flex-col gap-4 overflow-hidden transition-all duration-500 ease-in-out ${!activeSection ? 'flex-[1.5]' : ((activeSection === 'rx' || activeSection === 'exam') ? 'flex-[7]' : 'flex-[3]')}`}
                 >
+                    {/* Print Toggle - Moved to Left and Styled as Button */}
+                    <div className="flex justify-start px-2">
+                        <label
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ padding: '5px' }}
+                            className={`flex items-center gap-3 cursor-pointer text-sm font-bold select-none rounded-lg border transition-all shadow-sm active:scale-95 ${usePrePrinted ? 'bg-blue-600 text-white border-blue-600 ring-2 ring-blue-200' : 'bg-white text-gray-600 border-gray-300 hover:border-blue-400 hover:text-blue-600'}`}
+                        >
+                            <input
+                                type="checkbox"
+                                checked={usePrePrinted}
+                                onChange={e => setUsePrePrinted(e.target.checked)}
+                                className="hidden"
+                            />
+                            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${usePrePrinted ? 'bg-white border-white' : 'border-gray-400 bg-gray-50'}`}>
+                                {usePrePrinted && <div className="w-2.5 h-2.5 rounded-sm bg-blue-600" />}
+                            </div>
+                            Papel Membretado
+                        </label>
+                    </div>
 
                     {/* Prescriptions */}
                     <div onClick={(e) => { e.stopPropagation(); setActiveSection('rx'); }} className={`transition-all duration-300 bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col overflow-hidden min-h-0 ${activeSection === 'rx' ? 'flex-[3]' : (activeSection === 'exam' ? 'flex-1' : 'flex-1')}`}>
@@ -781,15 +1555,17 @@ const Atencion = () => {
                         </div>
 
                         {/* New Rx Input */}
-                        <div style={{ padding: '8px' }} className="border-b border-gray-100 bg-gray-50/30 space-y-4">
-                            <input className="input-field w-full text-base" style={{ marginBottom: '10px' }} placeholder="Medicamento..." value={newMed.name} onChange={e => setNewMed({ ...newMed, name: e.target.value })} />
-                            <div className="flex gap-2">
-                                <input className="input-field w-1/3 text-sm py-2" placeholder="Dosis (ej: 500mg)" value={newMed.dose} onChange={e => setNewMed({ ...newMed, dose: e.target.value })} />
-                                <input className="input-field w-1/3 text-sm py-2" placeholder="Frecuencia (ej: 8h)" value={newMed.freq} onChange={e => setNewMed({ ...newMed, freq: e.target.value })} />
-                                <input className="input-field w-1/3 text-sm py-2" placeholder="Duración (ej: 5 días)" value={newMed.duration} onChange={e => setNewMed({ ...newMed, duration: e.target.value })} />
-                                <button onClick={handleAddMedication} style={{ backgroundColor: '#059669', color: 'white', padding: '10px' }} className="rounded-lg shadow-sm mb-[2px] transition-all hover:opacity-90 flex-shrink-0"><Plus size={20} /></button>
+                        {appointment && (
+                            <div style={{ padding: '8px' }} className="border-b border-gray-100 bg-gray-50/30 space-y-4">
+                                <input className="input-field w-full text-base" style={{ marginBottom: '10px' }} placeholder="Medicamento..." value={newMed.name} onChange={e => setNewMed({ ...newMed, name: e.target.value })} />
+                                <div className="flex gap-2">
+                                    <input className="input-field w-1/3 text-sm py-2" placeholder="Dosis (ej: 500mg)" value={newMed.dose} onChange={e => setNewMed({ ...newMed, dose: e.target.value })} />
+                                    <input className="input-field w-1/3 text-sm py-2" placeholder="Frecuencia (ej: 8h)" value={newMed.freq} onChange={e => setNewMed({ ...newMed, freq: e.target.value })} />
+                                    <input className="input-field w-1/3 text-sm py-2" placeholder="Duración (ej: 5 días)" value={newMed.duration} onChange={e => setNewMed({ ...newMed, duration: e.target.value })} />
+                                    <button onClick={handleAddMedication} style={{ backgroundColor: '#059669', color: 'white', padding: '10px' }} className="rounded-lg shadow-sm mb-[2px] transition-all hover:opacity-90 flex-shrink-0"><Plus size={20} /></button>
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* Current Rx List */}
                         <div style={{ padding: '5px' }} className="flex-1 overflow-y-auto">
@@ -808,32 +1584,36 @@ const Atencion = () => {
                             ))}
 
                             {/* Instructions Input */}
-                            <div className="mb-4">
-                                <label style={{ marginBottom: '5px' }} className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Indicaciones / Observaciones</label>
-                                <div className="relative">
-                                    <textarea
-                                        style={{ padding: '5px' }}
-                                        className="w-full border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 text-sm bg-gray-50/50 resize-y min-h-[80px]"
-                                        placeholder="Escriba aquí las indicaciones generales..."
-                                        value={rxData.instructions}
-                                        onChange={e => setRxData(prev => ({ ...prev, instructions: e.target.value }))}
-                                        maxLength={550}
-                                    />
-                                    <span style={{ position: 'absolute', bottom: '8px', right: '8px', fontSize: '0.7rem', color: (rxData.instructions?.length || 0) > 500 ? 'var(--danger)' : 'var(--text-muted)' }}>
-                                        {rxData.instructions?.length || 0}/550
-                                    </span>
+                            {appointment && (
+                                <div className="mb-4">
+                                    <label style={{ marginBottom: '5px' }} className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Indicaciones / Observaciones</label>
+                                    <div className="relative">
+                                        <textarea
+                                            style={{ padding: '5px' }}
+                                            className="w-full border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 text-sm bg-gray-50/50 resize-y min-h-[80px]"
+                                            placeholder="Escriba aquí las indicaciones generales..."
+                                            value={rxData.instructions}
+                                            onChange={e => setRxData(prev => ({ ...prev, instructions: e.target.value }))}
+                                            maxLength={550}
+                                        />
+                                        <span style={{ position: 'absolute', bottom: '8px', right: '8px', fontSize: '0.7rem', color: (rxData.instructions?.length || 0) > 500 ? 'var(--danger)' : 'var(--text-muted)' }}>
+                                            {rxData.instructions?.length || 0}/550
+                                        </span>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
-                            <div className="mb-4">
-                                <label style={{ marginBottom: '5px' }} className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Fecha de Receta</label>
-                                <input
-                                    type="date"
-                                    className="input-field w-full text-sm py-2"
-                                    value={rxData.date}
-                                    onChange={e => setRxData(prev => ({ ...prev, date: e.target.value }))}
-                                />
-                            </div>
+                            {appointment && (
+                                <div className="mb-4">
+                                    <label style={{ marginBottom: '5px' }} className="block text-xs font-bold text-gray-500 uppercase mb-2 ml-1">Fecha de Receta</label>
+                                    <input
+                                        type="date"
+                                        className="input-field w-full text-sm py-2"
+                                        value={rxData.date}
+                                        onChange={e => setRxData(prev => ({ ...prev, date: e.target.value }))}
+                                    />
+                                </div>
+                            )}
 
                             {/* Button changes based on edit mode */}
                             {editingRxId ? (
@@ -842,9 +1622,11 @@ const Atencion = () => {
                                     <button onClick={handleCancelEdit} style={{ backgroundColor: '#6b7280', color: 'white', padding: '10px' }} className="w-full text-white text-sm font-bold rounded-lg shadow-md transition-all hover:opacity-90">Cancelar</button>
                                 </div>
                             ) : (
-                                <div style={{ padding: '10px' }} className="my-4">
-                                    <button onClick={handleSavePrescription} style={{ backgroundColor: '#059669', color: 'white', padding: '10px' }} className="w-full text-white text-sm font-bold rounded-lg shadow-md transition-all hover:opacity-90">Generar Receta</button>
-                                </div>
+                                appointment && (
+                                    <div style={{ padding: '10px' }} className="my-4">
+                                        <button onClick={handleSavePrescription} style={{ backgroundColor: '#059669', color: 'white', padding: '10px' }} className="w-full text-white text-sm font-bold rounded-lg shadow-md transition-all hover:opacity-90">Generar Receta</button>
+                                    </div>
+                                )
                             )}
 
                             {/* Past Prescriptions */}
@@ -903,45 +1685,47 @@ const Atencion = () => {
                                 </button>
                             )}
                         </div>
-                        <div style={{ padding: '5px' }} className="border-b border-gray-100 bg-gray-50/30 flex flex-col space-y-4">
-                            <input className="input-field w-full text-base" style={{ marginBottom: '5px' }} placeholder="Tipo de Examen..." value={examData.type} onChange={e => setExamData({ ...examData, type: e.target.value })} />
+                        {appointment && (
+                            <div style={{ padding: '5px' }} className="border-b border-gray-100 bg-gray-50/30 flex flex-col space-y-4">
+                                <input className="input-field w-full text-base" style={{ marginBottom: '5px' }} placeholder="Tipo de Examen..." value={examData.type} onChange={e => setExamData({ ...examData, type: e.target.value })} />
 
-                            {/* Médico Solicitante Field */}
-                            <input
-                                className="input-field w-full text-sm"
-                                style={{ marginBottom: '5px' }}
-                                placeholder="Médico Solicitante (opcional)..."
-                                value={examData.doctorName || ''}
-                                onChange={e => setExamData({ ...examData, doctorName: e.target.value })}
-                            />
-
-                            {/* Date Field for Exams */}
-                            <div className="flex gap-2 items-center" style={{ marginBottom: '5px' }}>
-                                <label className="text-xs font-bold text-gray-500 uppercase whitespace-nowrap">Fecha de Orden:</label>
+                                {/* Médico Solicitante Field */}
                                 <input
-                                    type="date"
-                                    className="input-field text-sm py-1 px-2 w-auto"
-                                    value={examData.date || new Date().toISOString().split('T')[0]}
-                                    onChange={e => setExamData({ ...examData, date: e.target.value })}
+                                    className="input-field w-full text-sm"
+                                    style={{ marginBottom: '5px' }}
+                                    placeholder="Médico Solicitante (opcional)..."
+                                    value={examData.doctorName || ''}
+                                    onChange={e => setExamData({ ...examData, doctorName: e.target.value })}
                                 />
-                            </div>
 
-                            <div className="flex gap-2 items-start">
-                                <div className="relative w-full">
-                                    <textarea
-                                        className="input-field w-full text-sm py-2 resize-none h-[100px]"
-                                        placeholder="Indicacion clinica / detalles del examen..."
-                                        value={examData.reason || ''}
-                                        onChange={e => setExamData({ ...examData, reason: e.target.value })}
-                                        maxLength={500}
+                                {/* Date Field for Exams */}
+                                <div className="flex gap-2 items-center" style={{ marginBottom: '5px' }}>
+                                    <label className="text-xs font-bold text-gray-500 uppercase whitespace-nowrap">Fecha de Orden:</label>
+                                    <input
+                                        type="date"
+                                        className="input-field text-sm py-1 px-2 w-auto"
+                                        value={examData.date || new Date().toISOString().split('T')[0]}
+                                        onChange={e => setExamData({ ...examData, date: e.target.value })}
                                     />
-                                    <span style={{ position: 'absolute', bottom: '8px', right: '8px', fontSize: '0.7rem', color: (examData.reason?.length || 0) > 450 ? 'var(--danger)' : 'var(--text-muted)' }}>
-                                        {examData.reason?.length || 0}/500
-                                    </span>
                                 </div>
-                                <button onClick={handleSaveExam} style={{ backgroundColor: '#7c3aed', color: 'white' }} className="p-3 rounded-lg shadow-sm transition-all hover:opacity-90 flex items-center justify-center"><Plus size={24} /></button>
+
+                                <div className="flex gap-2 items-start">
+                                    <div className="relative w-full">
+                                        <textarea
+                                            className="input-field w-full text-sm py-2 resize-none h-[100px]"
+                                            placeholder="Indicacion clinica / detalles del examen..."
+                                            value={examData.reason || ''}
+                                            onChange={e => setExamData({ ...examData, reason: e.target.value })}
+                                            maxLength={500}
+                                        />
+                                        <span style={{ position: 'absolute', bottom: '8px', right: '8px', fontSize: '0.7rem', color: (examData.reason?.length || 0) > 450 ? 'var(--danger)' : 'var(--text-muted)' }}>
+                                            {examData.reason?.length || 0}/500
+                                        </span>
+                                    </div>
+                                    <button onClick={handleSaveExam} style={{ backgroundColor: '#7c3aed', color: 'white' }} className="p-3 rounded-lg shadow-sm transition-all hover:opacity-90 flex items-center justify-center"><Plus size={24} /></button>
+                                </div>
                             </div>
-                        </div>
+                        )}
                         <div style={{ padding: '10px' }} className="flex-1 overflow-y-auto">
                             {/* Print Button Removed from here */}
 
@@ -979,7 +1763,7 @@ const Atencion = () => {
                                                         key={res.id}
                                                         className="flex items-center justify-between bg-green-50 px-3 py-2 rounded-lg border border-green-200 shadow-sm cursor-pointer hover:bg-green-100 transition-colors"
                                                         style={{ padding: '5px' }}
-                                                        onClick={(ev) => { ev.stopPropagation(); window.open(`http://${window.location.hostname}:5000/${res.filePath}`, '_blank'); }}
+                                                        onClick={(ev) => { ev.stopPropagation(); window.open(`http://${window.location.hostname}:3001/${res.filePath}`, '_blank'); }}
                                                     >
                                                         <div className="flex flex-col overflow-hidden mr-2">
                                                             <div className="flex items-center gap-1 text-xs font-bold text-green-700 truncate">
@@ -1238,6 +2022,119 @@ const Atencion = () => {
                             style={{ padding: '0.6rem 2rem', backgroundColor: '#16a34a', borderColor: '#16a34a' }}
                         >
                             Sí, Finalizar
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+            <Modal
+                isOpen={historyModalOpen}
+                onClose={() => { setHistoryModalOpen(false); setHistoryError(''); }}
+                title="Imprimir Historia Clínica"
+            >
+                <div className="space-y-6">
+                    {/* Date Range */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-1">Fecha Inicio</label>
+                            <input
+                                type="date"
+                                className="input-field w-full"
+                                value={historyStartDate}
+                                onChange={e => { setHistoryStartDate(e.target.value); setHistoryError(''); }}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-1">Fecha Fin</label>
+                            <input
+                                type="date"
+                                className="input-field w-full"
+                                value={historyEndDate}
+                                onChange={e => { setHistoryEndDate(e.target.value); setHistoryError(''); }}
+                            />
+                        </div>
+                    </div>
+
+                    {historyError && (
+                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center gap-3 animate-pulse">
+                            <AlertCircle size={20} className="flex-none" />
+                            <span className="text-sm font-bold">{historyError}</span>
+                        </div>
+                    )}
+
+                    {/* Content Filters */}
+                    <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-3">Contenido a Incluir</label>
+                        <div className="flex flex-wrap gap-3">
+                            <label
+                                className="flex items-center gap-2 cursor-not-allowed opacity-70 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold select-none"
+                                style={{ padding: '5px' }}
+                            >
+                                <input type="checkbox" checked={true} disabled className="accent-blue-600 w-4 h-4" />
+                                Historia Clínica
+                            </label>
+                            <label
+                                className="flex items-center gap-2 cursor-pointer bg-blue-50/30 border border-blue-100 hover:border-blue-300 rounded-lg text-sm font-bold transition-all select-none"
+                                style={{ padding: '5px' }}
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={printIncludeDiagnosis}
+                                    onChange={e => setPrintIncludeDiagnosis(e.target.checked)}
+                                    className="accent-blue-600 w-4 h-4"
+                                />
+                                Diagnóstico
+                            </label>
+                            <label
+                                className="flex items-center gap-2 cursor-pointer bg-blue-50/30 border border-blue-100 hover:border-blue-300 rounded-lg text-sm font-bold transition-all select-none"
+                                style={{ padding: '5px' }}
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={printIncludeRx}
+                                    onChange={e => setPrintIncludeRx(e.target.checked)}
+                                    className="accent-blue-600 w-4 h-4"
+                                />
+                                Recetas
+                            </label>
+                            <label
+                                className="flex items-center gap-2 cursor-pointer bg-blue-50/30 border border-blue-100 hover:border-blue-300 rounded-lg text-sm font-bold transition-all select-none"
+                                style={{ padding: '5px' }}
+                            >
+                                <input
+                                    type="checkbox"
+                                    checked={printIncludeExams}
+                                    onChange={e => setPrintIncludeExams(e.target.checked)}
+                                    className="accent-blue-600 w-4 h-4"
+                                />
+                                Exámenes
+                            </label>
+                        </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                        <button
+                            onClick={() => setHistoryModalOpen(false)}
+                            className="rounded-lg transition-colors font-bold flex items-center"
+                            style={{ marginTop: '15px', padding: '10px 15px', gap: '8px', backgroundColor: 'rgb(254, 242, 242)', color: 'rgb(153, 27, 27)', border: '1px solid rgb(254, 202, 202)' }}
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={handlePrintHistory}
+                            disabled={!historyStartDate || !historyEndDate}
+                            className="rounded-lg transition-all font-bold shadow-sm flex items-center"
+                            style={{
+                                marginTop: '15px',
+                                padding: '10px 15px', gap: '8px',
+                                backgroundColor: (!historyStartDate || !historyEndDate) ? '#f3f4f6' : 'rgb(240, 253, 244)',
+                                color: (!historyStartDate || !historyEndDate) ? '#9ca3af' : 'rgb(22, 101, 52)',
+                                border: (!historyStartDate || !historyEndDate) ? '1px solid #d1d5db' : '1px solid rgb(187, 247, 208)',
+                                cursor: (!historyStartDate || !historyEndDate) ? 'not-allowed' : 'pointer'
+                            }}
+                        >
+                            <Printer size={18} />
+                            Imprimir
                         </button>
                     </div>
                 </div>

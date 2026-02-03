@@ -230,7 +230,9 @@ db.serialize(() => {
                 { key: 'view_logs', desc: 'Ver Logs de Auditoría' },
                 { key: 'view_dashboard_stats', desc: 'Ver Estadísticas del Dashboard' },
                 { key: 'view_reports', desc: 'Ver Reportes y Estadísticas' },
+                { key: 'view_doctors', desc: 'Ver Módulo de Médicos/Personal' },
                 // Clinical Module
+                { key: 'view_agenda_patients', desc: 'Ver Agenda y Listado de Pacientes' },
                 { key: 'view_clinical', desc: 'Ver Módulo Clínico (Resumen)' },
                 { key: 'access_attention', desc: 'Acceso a Atención Clínica (Evolución/Recetas)' },
                 { key: 'delete_prescriptions', desc: 'Eliminar Recetas Médicas' },
@@ -247,9 +249,16 @@ db.serialize(() => {
             // Admin gets all
             defaultPermissions.forEach(p => insertRolePerm.run('admin', p.key));
             // Medico
+            insertRolePerm.run('medico', 'view_agenda_patients');
             insertRolePerm.run('medico', 'view_clinical');
             insertRolePerm.run('medico', 'access_attention');
             insertRolePerm.run('medico', 'view_reports');
+            insertRolePerm.run('medico', 'view_dashboard_stats');
+            insertRolePerm.run('medico', 'view_doctors');
+            insertRolePerm.run('medico', 'manage_users');
+
+            // Recepcion
+            insertRolePerm.run('recepcion', 'view_agenda_patients');
 
             insertRolePerm.finalize();
         }

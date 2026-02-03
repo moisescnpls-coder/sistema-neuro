@@ -27,8 +27,8 @@ Siga estos pasos en orden. **No necesita abrir terminales**, todo se hace con do
 ## 3. Acceso desde Recepción (Problemas de Conexión)
 Si Recepción no puede entrar:
 1. Haga doble clic en **`DIAGNOSTICO_RED.bat`**.
-2. El programa le dirá la **ID exacta** (ej: http://192.168.1.15:5000) que debe poner en la otra PC.
-3. Si aún no conecta, verifique que el Firewall de Windows permita el puerto 5000.
+2. El programa le dirá la **ID exacta** (ej: http://192.168.1.15:3001) que debe poner en la otra PC.
+3. Si aún no conecta, verifique que el Firewall de Windows permita el puerto 3001.
 
 ## 4. Cómo Actualizar el Sistema (Pasar cambios nuevos)
 Cuando reciba una carpeta nueva con actualizaciones:

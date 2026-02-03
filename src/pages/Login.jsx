@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, User, Activity } from 'lucide-react';
+import { Lock, User, Activity, Eye, EyeOff } from 'lucide-react';
 import { dataService } from '../services/data';
 import { useAuth } from '../context/AuthContext';
 import { showAlert } from '../utils/alerts';
@@ -8,9 +8,10 @@ import { showAlert } from '../utils/alerts';
 const Login = () => {
     const navigate = useNavigate();
     const { login } = useAuth();
-    const [credentials, setCredentials] = useState({ username: '', password: '' });
+    const [credentials, setCredentials] = useState({ username: '', password: '', name: '', role: 'recepcion' });
     const [loading, setLoading] = useState(false);
     const [companyName, setCompanyName] = useState('Neurocenter Bolivar');
+    const [showPassword, setShowPassword] = useState(false);
 
     useEffect(() => {
         dataService.getSettings()
@@ -97,14 +98,32 @@ const Login = () => {
                     <div style={{ position: 'relative' }}>
                         <Lock size={20} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-light)' }} />
                         <input
-                            type="password"
+                            type={showPassword ? "text" : "password"}
                             placeholder="Contraseña"
                             required
                             className="input-field"
-                            style={{ paddingLeft: '3rem' }}
+                            style={{ paddingLeft: '3rem', paddingRight: '2.5rem' }}
                             value={credentials.password}
                             onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
                         />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            style={{
+                                position: 'absolute',
+                                right: '0.75rem',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                background: 'none',
+                                border: 'none',
+                                color: 'var(--text-light)',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center'
+                            }}
+                        >
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
                     </div>
 
                     <button
@@ -118,7 +137,7 @@ const Login = () => {
                 </form>
 
                 <div style={{ marginTop: '2rem', fontSize: '0.8rem', color: 'var(--text-light)' }}>
-                    v1.0.0
+                    v1.1.0
                 </div>
             </div>
         </div>

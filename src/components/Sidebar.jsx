@@ -7,10 +7,16 @@ const Sidebar = () => {
   const { user, logout, hasPermission } = useAuth();
   const menuItems = [
     { name: 'Panel Principal', icon: <LayoutDashboard size={20} />, path: '/' },
-    { name: 'Agenda', icon: <Calendar size={20} />, path: '/agenda' },
-    { name: 'Pacientes', icon: <Users size={20} />, path: '/pacientes' },
-    { name: 'Médicos', icon: <Stethoscope size={20} />, path: '/medicos' },
   ];
+
+  if (hasPermission('view_agenda_patients')) {
+    menuItems.push({ name: 'Agenda', icon: <Calendar size={20} />, path: '/agenda' });
+    menuItems.push({ name: 'Pacientes', icon: <Users size={20} />, path: '/pacientes' });
+  }
+
+  if (hasPermission('view_doctors')) {
+    menuItems.push({ name: 'Médicos', icon: <Stethoscope size={20} />, path: '/medicos' });
+  }
 
   if (hasPermission('view_clinical')) {
     menuItems.push({ name: 'Clínico', icon: <Activity size={20} />, path: '/clinico' });
@@ -118,6 +124,10 @@ const Sidebar = () => {
           <p style={{ fontSize: '0.9rem', margin: 0 }}>Cerrar Sesión</p>
         </div>
       </button>
+
+      <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.7rem', color: '#94a3b8', fontStyle: 'italic' }}>
+        Versión 1.1.0
+      </div>
     </div>
   );
 };
