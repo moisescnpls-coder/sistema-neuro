@@ -81,6 +81,12 @@ const QuickAction = ({ title, icon, color, onClick, description }) => (
     </button>
 );
 
+const calculateAge = (birthDate) => {
+    if (!birthDate) return null;
+    const diff = Date.now() - new Date(birthDate).getTime();
+    return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
+};
+
 const Dashboard = () => {
     const navigate = useNavigate();
     const { user, hasPermission } = useAuth();
@@ -340,14 +346,16 @@ const Dashboard = () => {
                                                     {patient.clinicalHistoryNumber}
                                                 </span>
                                             </td>
-                                            <td style={{ padding: '1rem 1.5rem', color: 'var(--text-muted)' }}>{patient.age ? `${patient.age} años` : '-'}</td>
+                                            <td style={{ padding: '1rem 1.5rem', color: 'var(--text-muted)' }}>
+                                                {patient.age || calculateAge(patient.birthDate) ? `${patient.age || calculateAge(patient.birthDate)} años` : '-'}
+                                            </td>
                                             <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
                                                 <button
-                                                    onClick={() => navigate(`/pacientes/${patient.id}`)}
+                                                    onClick={() => navigate(`/atencion/paciente/${patient.id}`)}
                                                     className="btn-secondary"
                                                     style={{ padding: '0.3rem 0.8rem', fontSize: '0.8rem' }}
                                                 >
-                                                    Ver Ficha
+                                                    Historia
                                                 </button>
                                             </td>
                                         </tr>

@@ -18,7 +18,7 @@ const Sidebar = () => {
     menuItems.push({ name: 'Médicos', icon: <Stethoscope size={20} />, path: '/medicos' });
   }
 
-  if (hasPermission('view_clinical')) {
+  if (hasPermission('view_clinical') && user?.role === 'admin') {
     menuItems.push({ name: 'Clínico', icon: <Activity size={20} />, path: '/clinico' });
   }
 
