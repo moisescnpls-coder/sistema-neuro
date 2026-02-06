@@ -41,50 +41,27 @@ Descargue e instale los siguientes programas:
 
 ### 3. Instalar Dependencias y Construir
 1. Abra la carpeta `Sistema Neuro`.
-2. Haga clic en la barra de direcciones de arriba, escriba `cmd` y presione Enter. Se abrirá una ventana negra.
-3. Escriba los siguientes comandos uno por uno, esperando a que termine cada uno:
-
-```bash
-npm install
-```
-*(Esto descargará todas las librerías necesarias. Puede tardar unos minutos)*
-
-```bash
-npm run build
-```
-*(Esto preparará la parte visual del sistema. Debería terminar diciendo "Build complete" o similar)*
+2. Busque el archivo **`INSTALAR_PM2.bat`**.
+3. Haga clic derecho y seleccione "Ejecutar como Administrador".
+4. Espere a que termine (instalará todo y creará la versión final del sistema).
 
 ---
 
 ## Paso 3: Iniciar el Sistema
 
 ### Opción A: Inicio Manual (Prueba)
-En la misma ventana negra, escriba:
-```bash
-npm start
-```
-Si todo está bien, verá un mensaje diciendo que el servidor está corriendo en el puerto 5000 (o 3001). Abra `http://localhost:5000` en su navegador (Chrome/Edge) para verificar.
+Ejecute el archivo **`INICIAR_SISTEMA.bat`**.
+Esto abrirá una ventana negra y el navegador. Si funciona, ciérrelo y pase a la Opción B.
 
-### Opción B: Instalación Definitiva (PM2 - Arranque Automático)
-Para que el sistema inicie solo cuando prenda la computadora:
+### Opción B: Instalación Definitiva (Arranque Automático)
+Para que el sistema inicie solo con Windows:
 
-1. En la ventana de comandos (cmd) dentro de la carpeta del sistema ejecute:
-   ```bash
-   npm install -g pm2
-   ```
-2. Inicie el sistema con PM2 usando el archivo de configuración incluido:
-   ```bash
-   pm2 start ecosystem.config.cjs
-   ```
-3. Guarde la configuración para que persista:
-   ```bash
-   pm2 save
-   ```
-4. **IMPORTANTE**: Para que inicie con Windows, necesita generar el script de inicio:
+1. Ejecute el archivo **`INICIAR_SERVICIO_PM2.bat`**.
+2. Al finalizar, abra una ventana de comandos (cmd) en la carpeta y escriba:
    ```bash
    pm2-startup install
    ```
-   *(Siga las instrucciones que aparezcan en pantalla si le pide ejecutar otro comando)*.
+   *(Esto asegura que el sistema reviva si se apaga la PC)*.
 
 ---
 
