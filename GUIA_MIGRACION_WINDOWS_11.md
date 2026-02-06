@@ -1,26 +1,23 @@
-# Guía de Migración a Windows 11 - Sistema Neuro
+# Guía de Migración: Transferencia a Windows 11
 
-Esta guía detalla los pasos para realizar una copia de seguridad completa del sistema, formatear el equipo y reinstalar todo en Windows 11 sin perder datos.
-
-> [!IMPORTANT]
-> **NO FORMATEE SU EQUIPO** sin antes haber copiado el archivo de respaldo generado en el Paso 1 a una unidad externa (USB) o a la nube (Google Drive, OneDrive).
+Esta guía explica cómo empaquetar el sistema actual desde su computadora y transferirlo a la nueva instalación de Windows 11 en la máquina de la Dra.
 
 ---
 
-## Paso 1: Crear Respaldo (Antes de Formatear)
+## Paso 1: Preparar Paquete de Instalación (En su PC)
 
-Hemos creado una herramienta automática para facilitar este proceso.
+Ejecutaremos un script para crear un archivo comprimido que contenga todo el sistema y los datos listo para ser transferido.
 
 1. Busque el archivo `CREAR_RESPALDO.ps1` en la carpeta del proyecto.
 2. Haga clic derecho sobre él y seleccione **"Ejecutar con PowerShell"**.
-3. Espere a que termine el proceso. Se creará un archivo `.zip` con un nombre como: `RESPALDO_SISTEMA_NEURO_2026-02-05_....zip`.
-4. **COPIE ESTE ARCHIVO ZIP A UN USB O DISCO EXTERNO.**
+3. Espere a que termine el proceso. Se creará un archivo ZIP (Ej: `RESPALDO_SISTEMA_NEURO...zip`).
+4. **COPIE ESTE ARCHIVO ZIP A UN USB.**
 
-### ¿Qué incluye el respaldo?
-- Base de datos (`sistema_neuro.db`) con todos los pacientes e historias.
-- Archivos subidos (`/uploads`): fotos, PDFs, resultados de exámenes.
-- Configuraciones (`.env`, `ecosystem.config.cjs`).
-- Código fuente del sistema.
+### ¿Qué contiene este paquete?
+- El código completo del sistema.
+- La base de datos actual (`sistema_neuro.db`).
+- Todas las imágenes y archivos de pacientes (`/uploads`).
+- Las configuraciones necesarias para funcionar.
 
 ---
 
