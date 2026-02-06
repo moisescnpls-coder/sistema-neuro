@@ -1,3 +1,5 @@
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const cors = require('cors');
 const compression = require('compression');
@@ -5,7 +7,7 @@ const db = require('./db');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
-const path = require('path');
+// path was already required at the top
 const fs = require('fs');
 
 // Ensure uploads directory structure exists - Standardized to backend/uploads
@@ -81,7 +83,7 @@ const SECRET_KEY = 'neuro_secret_key_2026'; // Em produção, usar variável de 
 const app = express();
 
 
-const PORT = process.env.PORT || 3001; // Note: If port 5173 is busy, try http://localhost:5174
+const PORT = process.env.PORT || 5000; // Updated default port to 5000
 
 app.use(compression()); // Enable GZIP compression for all responses
 app.use(cors());

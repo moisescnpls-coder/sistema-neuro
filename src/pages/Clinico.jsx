@@ -243,7 +243,7 @@ const Clinico = () => {
     const handlePrintRx = async (rx) => {
         try {
             const settings = await dataService.getSettings();
-            const API_HOST = `http://${window.location.hostname}:3001`;
+            const API_HOST = `http://${window.location.hostname}:5000`;
             const printWindow = window.open('', '', 'height=800,width=1200');
 
             const logoUrl = settings.logoUrl ? `${API_HOST}/${settings.logoUrl}` : '';
@@ -638,7 +638,7 @@ const Clinico = () => {
     const handlePrintExam = async (exam) => {
         try {
             const settings = await dataService.getSettings();
-            const API_HOST = `http://${window.location.hostname}:3001`;
+            const API_HOST = `http://${window.location.hostname}:5000`;
             const printWindow = window.open('', '', 'height=800,width=1000');
 
             const logoUrl = settings.logoUrl ? `${API_HOST}/${settings.logoUrl}` : '';
@@ -1312,7 +1312,7 @@ const Clinico = () => {
                                                     {ex.results.map(r => (
                                                         <div key={r.id} style={{ display: 'flex', alignItems: 'center', marginBottom: '4px', flexWrap: 'wrap' }}>
                                                             <a
-                                                                href={`http://localhost:3001/${r.filePath}`}
+                                                                href={`http://localhost:5000/${r.filePath}`}
                                                                 target="_blank"
                                                                 rel="noreferrer"
                                                                 style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--primary)', fontSize: '0.9rem', textDecoration: 'none', marginRight: '10px' }}

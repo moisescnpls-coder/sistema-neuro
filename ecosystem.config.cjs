@@ -8,8 +8,7 @@ module.exports = {
         max_memory_restart: '1G',
         env: {
             NODE_ENV: "production",
-            PORT: 3001
-        },
-        node_args: "--env-file=backend/.env"
+            PORT: 5000
+        }
     }]
 }

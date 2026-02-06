@@ -180,6 +180,7 @@ const Dashboard = () => {
                 title: 'Exámenes Pendientes',
                 items: allExams.map(exam => ({
                     id: exam.id,
+                    patientId: exam.patientId, // Added for navigation
                     line1: exam.patientName || 'Paciente',
                     line2: exam.type || 'Examen',
                     line3: exam.date ? `Solicitado: ${exam.date}` : ''
@@ -438,12 +439,22 @@ const Dashboard = () => {
                     {modalContent.items.map((item, index) => (
                         <div
                             key={item.id || index}
+                            onClick={() => {
+                                if (item.patientId) {
+                                    setShowModal(false);
+                                    navigate(`/atencion/paciente/${item.patientId}`);
+                                }
+                            }}
                             style={{
                                 padding: '1rem',
                                 background: 'var(--bg-body)',
                                 borderRadius: 'var(--radius-md)',
-                                border: '1px solid var(--border)'
+                                border: '1px solid var(--border)',
+                                cursor: 'pointer', // Added pointer cursor
+                                transition: 'all 0.2s', // Added transition
                             }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = '#f0f9ff'} // Added hover effect
+                            onMouseLeave={(e) => e.currentTarget.style.background = 'var(--bg-body)'}
                         >
                             <p style={{ fontWeight: 'bold', color: 'var(--text-main)', marginBottom: '0.5rem' }}>
                                 {item.line1}

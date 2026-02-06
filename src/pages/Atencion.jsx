@@ -341,7 +341,7 @@ const Atencion = () => {
 
         try {
             const settings = await dataService.getSettings();
-            const API_HOST = `http://${window.location.hostname}:3001`;
+            const API_HOST = `http://${window.location.hostname}:5000`;
             const printWindow = window.open('', '_blank');
             const logoUrl = settings.logoUrl ? `${API_HOST}/${settings.logoUrl}` : '';
             const pName = patient.fullName || `${patient.firstName} ${patient.lastName}`;
@@ -606,7 +606,7 @@ const Atencion = () => {
     const handlePrintRxNew = async (rx) => {
         try {
             const settings = await dataService.getSettings();
-            const API_HOST = `http://${window.location.hostname}:3001`;
+            const API_HOST = `http://${window.location.hostname}:5000`;
             const printWindow = window.open('', '_blank');
             const logoUrl = settings.logoUrl ? `${API_HOST}/${settings.logoUrl}` : '';
 
@@ -1763,7 +1763,7 @@ const Atencion = () => {
                                                         key={res.id}
                                                         className="flex items-center justify-between bg-green-50 px-3 py-2 rounded-lg border border-green-200 shadow-sm cursor-pointer hover:bg-green-100 transition-colors"
                                                         style={{ padding: '5px' }}
-                                                        onClick={(ev) => { ev.stopPropagation(); window.open(`http://${window.location.hostname}:3001/${res.filePath}`, '_blank'); }}
+                                                        onClick={(ev) => { ev.stopPropagation(); window.open(`http://${window.location.hostname}:5000/${res.filePath}`, '_blank'); }}
                                                     >
                                                         <div className="flex flex-col overflow-hidden mr-2">
                                                             <div className="flex items-center gap-1 text-xs font-bold text-green-700 truncate">

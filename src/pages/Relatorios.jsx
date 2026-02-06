@@ -36,7 +36,7 @@ const Relatorios = () => {
         }
     }, [location.state]);
 
-    const API_HOST = `http://${window.location.hostname}:3001`;
+    const API_HOST = `http://${window.location.hostname}:5000`;
     const departments = ubigeoService.getDepartments();
 
     if (!isAdmin && !hasPermission('view_reports')) {
