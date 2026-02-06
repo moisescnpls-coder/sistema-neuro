@@ -34,10 +34,12 @@ Descargue e instale los siguientes programas:
 - **Git**: [https://git-scm.com/](https://git-scm.com/) (Opcional, pero recomendado).
 - **VS Code**: [https://code.visualstudio.com/](https://code.visualstudio.com/) (Para editar código si fuera necesario).
 
-### 2. Restaurar el Sistema
-1. Cree una carpeta en el Escritorio llamada `Sistema Neuro`.
-2. Copie el archivo ZIP de su respaldo a esta carpeta y **extráigalo** (Click derecho -> Extraer aquí).
-3. Asegúrese de que los archivos estén directamente en la carpeta (que vea carpetas como `backend`, `src`, `public`, etc.).
+### 2. Copiar Archivos del Sistema (Desde su PC)
+1. Conecte el USB donde guardó el archivo ZIP.
+2. Copie el archivo ZIP al Escritorio de la nueva máquina.
+3. Haga clic derecho sobre el ZIP y seleccione **"Extraer todo..."**.
+4. Nombre la carpeta extraída como `Sistema Neuro`.
+5. Abra la carpeta y asegúrese de ver los archivos internos (`backend`, `src`, etc.).
 
 ### 3. Instalar Dependencias y Construir
 1. Abra la carpeta `Sistema Neuro`.
