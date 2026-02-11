@@ -320,8 +320,8 @@ const Pacientes = () => {
                 </div>
 
                 <div className="card">
-                    {/* Results Counter */}
-                    <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    {/* Results Counter & Actions - Moved Top */}
+                    <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 0.5rem' }}>
                         <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
                             {filters.name || filters.document || filters.hc || filters.phone || filters.age ? (
                                 <>
@@ -335,104 +335,75 @@ const Pacientes = () => {
                             <button
                                 onClick={() => setFilters({ name: '', document: '', hc: '', phone: '', age: '' })}
                                 className="btn-secondary"
-                                style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem' }}
+                                style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}
                             >
+                                <Trash2 size={14} />
                                 Limpiar filtros
                             </button>
                         )}
+                    </div>
+
+                    {/* Filters Grid */}
+                    <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg border border-gray-100" style={{ padding: '10px', marginBottom: '5px' }}>
+                        {/* Name Filter */}
+                        <div className="col-span-1 md:col-span-2 lg:col-span-1">
+                            <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Paciente</label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    className="input-field w-full !pl-10"
+                                    placeholder="Buscar aquí por Nombres o Apellidos..."
+                                    value={filters.name}
+                                    onChange={(e) => setFilters({ ...filters, name: e.target.value })}
+                                />
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                            </div>
+                        </div>
+
+                        {/* Document Filter */}
+                        <div className="col-span-1">
+                            <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Documento</label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    className="input-field w-full !pl-10"
+                                    placeholder="Buscar aquí por documento..."
+                                    value={filters.document}
+                                    onChange={(e) => setFilters({ ...filters, document: e.target.value })}
+                                />
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                            </div>
+                        </div>
+
+                        {/* HC Filter */}
+                        <div className="col-span-1">
+                            <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Historia Clínica</label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    className="input-field w-full !pl-10"
+                                    placeholder="Buscar por Nº de Historia..."
+                                    value={filters.hc}
+                                    onChange={(e) => setFilters({ ...filters, hc: e.target.value })}
+                                />
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                            </div>
+                        </div>
                     </div>
 
                     <div className="min-h-table overflow-x-auto rounded-lg shadow-sm">
                         <table className="w-full" style={{ borderCollapse: 'collapse' }}>
                             <thead className="bg-gray-50/50">
                                 {/* Column Headers */}
-                                <tr style={{ borderBottom: '2px solid #e5e7eb' }}>
-                                    <th style={{ paddingLeft: '20px' }} className="pr-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Paciente</th>
-                                    <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Documento</th>
-                                    <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">HC</th>
-                                    <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Teléfono</th>
-                                    <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Edad</th>
-                                    <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Acciones</th>
+                                <tr style={{ borderBottom: '5px solid #e5e7eb' }}>
+                                    <th style={{ padding: '5px', paddingLeft: '20px' }} className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Paciente</th>
+                                    <th className="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider" style={{ padding: '5px' }}>Documento</th>
+                                    <th className="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider" style={{ padding: '5px' }}>HC</th>
+                                    <th className="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider" style={{ padding: '5px' }}>Teléfono</th>
+                                    <th className="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider" style={{ padding: '5px' }}>Edad</th>
+                                    <th className="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider" style={{ padding: '5px' }}>Acciones</th>
                                 </tr>
-                                {/* Filter Row */}
-                                <tr style={{ borderBottom: '1px solid #e5e7eb', background: '#f9fafb' }}>
-                                    <th style={{ paddingLeft: '20px' }} className="pr-6 py-2">
-                                        <input
-                                            type="text"
-                                            placeholder="Filtrar nombre..."
-                                            className="input-field"
-                                            style={{
-                                                padding: '0.4rem 0.6rem',
-                                                fontSize: '0.8rem',
-                                                width: '100%',
-                                                border: filters.name ? '1.5px solid var(--primary)' : '1px solid #e5e7eb'
-                                            }}
-                                            value={filters.name}
-                                            onChange={(e) => setFilters({ ...filters, name: e.target.value })}
-                                        />
-                                    </th>
-                                    <th className="px-6 py-2">
-                                        <input
-                                            type="text"
-                                            placeholder="Filtrar doc..."
-                                            className="input-field"
-                                            style={{
-                                                padding: '0.4rem 0.6rem',
-                                                fontSize: '0.8rem',
-                                                width: '100%',
-                                                border: filters.document ? '1.5px solid var(--primary)' : '1px solid #e5e7eb'
-                                            }}
-                                            value={filters.document}
-                                            onChange={(e) => setFilters({ ...filters, document: e.target.value })}
-                                        />
-                                    </th>
-                                    <th className="px-6 py-2">
-                                        <input
-                                            type="text"
-                                            placeholder="Filtrar HC..."
-                                            className="input-field"
-                                            style={{
-                                                padding: '0.4rem 0.6rem',
-                                                fontSize: '0.8rem',
-                                                width: '100%',
-                                                border: filters.hc ? '1.5px solid var(--primary)' : '1px solid #e5e7eb'
-                                            }}
-                                            value={filters.hc}
-                                            onChange={(e) => setFilters({ ...filters, hc: e.target.value })}
-                                        />
-                                    </th>
-                                    <th className="px-6 py-2">
-                                        <input
-                                            type="text"
-                                            placeholder="Filtrar tel..."
-                                            className="input-field"
-                                            style={{
-                                                padding: '0.4rem 0.6rem',
-                                                fontSize: '0.8rem',
-                                                width: '100%',
-                                                border: filters.phone ? '1.5px solid var(--primary)' : '1px solid #e5e7eb'
-                                            }}
-                                            value={filters.phone}
-                                            onChange={(e) => setFilters({ ...filters, phone: e.target.value })}
-                                        />
-                                    </th>
-                                    <th className="px-6 py-2">
-                                        <input
-                                            type="text"
-                                            placeholder="Filtrar..."
-                                            className="input-field"
-                                            style={{
-                                                padding: '0.4rem 0.6rem',
-                                                fontSize: '0.8rem',
-                                                width: '100%',
-                                                border: filters.age ? '1.5px solid var(--primary)' : '1px solid #e5e7eb'
-                                            }}
-                                            value={filters.age}
-                                            onChange={(e) => setFilters({ ...filters, age: e.target.value })}
-                                        />
-                                    </th>
-                                    <th className="px-6 py-2"></th>
-                                </tr>
+                                {/* Filter Row Removed */}
                             </thead>
                             <tbody className="bg-white">
                                 {currentItems.map(patient => (
@@ -776,7 +747,7 @@ const Pacientes = () => {
 
                             {/* Row 9 - Summary full width */}
                             <div className="md:col-span-2">
-                                <FormField label="Resumo Clínico">
+                                <FormField label="Resumen Clínico">
                                     <textarea
                                         className="input-field"
                                         rows="3"
