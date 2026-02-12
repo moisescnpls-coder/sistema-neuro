@@ -25,6 +25,11 @@ Como vamos a conectar el sistema a la nube, necesitamos hacer un cambio de carpe
     *   Haz clic en la **barra de direcciones** de la carpeta (arriba).
     *   Escribe `cmd` y presiona **Enter**.
     *   *(O si tienes Windows 11: Shift + Clic Derecho > "Abrir en Terminal")*
+
+    > **¿No tienes Git instalado?**  
+    > Si al escribir `git` te sale error, instálalo rápido pegando esto:  
+    > `winget install --id Git.Git -e --source winget`
+
 2.  En la ventana negra que se abre, escribe el comando:
     ```bash
     git clone https://github.com/moisescnpls-coder/sistema-neuro.git "Sistema Neuro"
