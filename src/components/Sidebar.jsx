@@ -22,7 +22,7 @@ const Sidebar = () => {
     menuItems.push({ name: 'Clínico', icon: <Activity size={20} />, path: '/clinico' });
   }
 
-  if (hasPermission('manage_users')) {
+  if (hasPermission('manage_users') && user?.role !== 'recepcion') {
     menuItems.push({ name: 'Usuarios', icon: <Users size={20} />, path: '/usuarios' });
   }
 

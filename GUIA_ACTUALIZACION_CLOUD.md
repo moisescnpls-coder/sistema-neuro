@@ -39,8 +39,8 @@ Como vamos a conectar el sistema a la nube, necesitamos hacer un cambio de carpe
 ### Paso D: Restaurar tus datos
 Entra a la carpeta de respaldo (`Sistema Neuro_RESPALDO`) y **copia** estos archivos a la nueva carpeta (`Sistema Neuro`):
 1.  La carpeta `uploads` (donde están las fotos).
-2.  El archivo de base de datos `.sqlite` (si usas SQLite) que suele estar en `backend/database`.
-3.  El archivo `.env` (si tienes configuraciones secretas).
+2.  El archivo de base de datos `sistema_neuro.db` que está dentro de la carpeta `backend`.
+3.  El archivo `.env` que está dentro de la carpeta `backend`.
 
 ### Paso E: Reactivar el sistema
 1.  Entra a la nueva carpeta `Sistema Neuro`.
