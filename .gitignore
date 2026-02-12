@@ -23,3 +23,5 @@ dist-ssr
 *.sln
 *.sw?
 /uploads
+backend/sistema_neuro.db
+backend/sistema_neuro.db-journal

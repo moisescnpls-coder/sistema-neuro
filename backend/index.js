@@ -737,15 +737,21 @@ app.delete('/api/appointments/:id', authenticateToken, (req, res) => {
     });
 
     function deleteAppointment(id, res) {
-        // Cascade delete triage first
-        db.run("DELETE FROM triage WHERE appointmentId = ?", [id], (err) => {
-            if (err) console.error("Error deleting cascade triage:", err);
+        // Cascade delete all related records
+        const deleteTriage = new Promise((resolve) => db.run("DELETE FROM triage WHERE appointmentId = ?", [id], resolve));
+        const deleteExams = new Promise((resolve) => db.run("DELETE FROM exams WHERE appointmentId = ?", [id], resolve));
+        const deletePrescriptions = new Promise((resolve) => db.run("DELETE FROM prescriptions WHERE appointmentId = ?", [id], resolve));
+        const deleteHistory = new Promise((resolve) => db.run("DELETE FROM history WHERE appointmentId = ?", [id], resolve));
 
+        Promise.all([deleteTriage, deleteExams, deletePrescriptions, deleteHistory]).then(() => {
             // Then delete the appointment
             db.run("DELETE FROM appointments WHERE id = ?", [id], function (err) {
                 if (err) return res.status(400).json({ error: err.message });
                 res.json({ success: true, changes: this.changes });
             });
+        }).catch(err => {
+            console.error("Error deleting cascade records:", err);
+            res.status(500).json({ error: "Error deleting related records" });
         });
     }
 });
