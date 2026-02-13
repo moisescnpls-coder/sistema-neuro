@@ -1411,7 +1411,10 @@ app.post('/api/settings', authenticateToken, upload.single('logo'), (req, res) =
     let params = [ruc, razonSocial, nombreComercial, celular, telefono, correo, direccion];
 
     if (req.file) {
-        const logoUrl = req.file.path.replace(/\\/g, '/');
+        // FIX: Store relative path to project root (e.g., 'uploads/temp/file.png')
+        // req.file.path is absolute from multer. We strip up to 'uploads'.
+        const relativePath = path.relative(path.join(__dirname, '..'), req.file.path);
+        const logoUrl = relativePath.replace(/\\/g, '/');
         sql += ", logoUrl=?";
         params.push(logoUrl);
     }
