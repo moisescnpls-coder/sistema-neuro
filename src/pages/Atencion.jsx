@@ -609,7 +609,9 @@ const Atencion = () => {
             const settings = await dataService.getSettings();
             const API_HOST = `http://${window.location.hostname}:5000`;
             const printWindow = window.open('', '_blank');
-            const logoUrl = settings.logoUrl ? `${API_HOST}/${settings.logoUrl}` : '';
+            // FIX: Use relative path for VPS/HTTPS compatibility (proxied by Nginx/Vite)
+            // If settings.logoUrl starts with 'uploads', prepend '/' to make it root-relative
+            const logoUrl = settings.logoUrl ? (settings.logoUrl.startsWith('/') ? settings.logoUrl : `/${settings.logoUrl}`) : '';
 
             // 1. Patient Name
             const pName = patient.fullName || `${patient.firstName} ${patient.lastName}`;
