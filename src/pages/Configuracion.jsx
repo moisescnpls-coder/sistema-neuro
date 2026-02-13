@@ -32,8 +32,13 @@ const Configuracion = () => {
             const data = await dataService.getSettings();
             setSettings(data);
             if (data.logoUrl) {
-                // Use relative path for VPS/HTTPS compatibility
-                setLogoPreview(data.logoUrl.startsWith('http') ? data.logoUrl : `/${data.logoUrl}`);
+                // HYBRID FIX: Relative for HTTPS (VPS), Absolute for HTTP (Local)
+                const isHttps = window.location.protocol === 'https:';
+                let logoPath = data.logoUrl;
+                if (!logoPath.startsWith('/')) logoPath = `/${logoPath}`;
+
+                const finalUrl = logoPath.startsWith('http') ? logoPath : (isHttps ? logoPath : `http://${window.location.hostname}:5000${logoPath}`);
+                setLogoPreview(finalUrl);
             }
         } catch (error) {
             console.error('Error loading settings:', error);
@@ -77,7 +82,12 @@ const Configuracion = () => {
             const updated = await dataService.saveSettings(formData);
             setSettings(updated);
             if (updated.logoUrl) {
-                setLogoPreview(updated.logoUrl.startsWith('http') ? updated.logoUrl : `/${updated.logoUrl}`);
+                const isHttps = window.location.protocol === 'https:';
+                let logoPath = updated.logoUrl;
+                if (!logoPath.startsWith('/')) logoPath = `/${logoPath}`;
+
+                const finalUrl = logoPath.startsWith('http') ? logoPath : (isHttps ? logoPath : `http://${window.location.hostname}:5000${logoPath}`);
+                setLogoPreview(finalUrl);
             }
             showAlert('Configuración guardada correctamente', 'success');
         } catch (error) {

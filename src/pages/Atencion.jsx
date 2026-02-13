@@ -609,9 +609,15 @@ const Atencion = () => {
             const settings = await dataService.getSettings();
             const API_HOST = `http://${window.location.hostname}:5000`;
             const printWindow = window.open('', '_blank');
-            // FIX: Use relative path for VPS/HTTPS compatibility (proxied by Nginx/Vite)
-            // If settings.logoUrl starts with 'uploads', prepend '/' to make it root-relative
-            const logoUrl = settings.logoUrl ? (settings.logoUrl.startsWith('/') ? settings.logoUrl : `/${settings.logoUrl}`) : '';
+
+            // HYBRID FIX:
+            // 1. If HTTPS (VPS/Cloud), use relative path (proxied by Nginx) to avoid Mixed Content.
+            // 2. If HTTP (Local Network), use absolute path with port 5000 to ensure access even if frontend is on different port.
+            const isHttps = window.location.protocol === 'https:';
+            let logoPath = settings.logoUrl || '';
+            if (logoPath && !logoPath.startsWith('/')) logoPath = `/${logoPath}`;
+
+            const logoUrl = logoPath ? (isHttps ? logoPath : `${API_HOST}${logoPath}`) : '';
 
             // 1. Patient Name
             const pName = patient.fullName || `${patient.firstName} ${patient.lastName}`;
