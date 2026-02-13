@@ -4,6 +4,7 @@ import { ArrowLeft, User, Calendar, Plus, Save, FileText, Activity, File, Clock,
 import { useAuth } from '../context/AuthContext';
 import { dataService } from '../services/data';
 import { showAlert } from '../utils/alerts';
+import { formatTime } from '../utils/format';
 import Modal from '../components/Modal';
 
 const PacienteDetalles = () => {
@@ -109,7 +110,7 @@ const PacienteDetalles = () => {
                         id: `appt-${a.id}`,
                         type: a.status === 'Completado' ? 'Cita Completada' : `Cita ${a.status}`,
                         date: a.date,
-                        time: a.time, // Add time for display
+                        time: formatTime(a.time), // Add time for display
                         notes: `${a.type}${a.notes ? ' - ' + a.notes : ''}`,
                         icon: Calendar,
                         color: a.status === 'Completado' ? '#10b981' : (a.status === 'Cancelado' ? '#ef4444' : (a.status === 'Confirmado' ? '#f59e0b' : '#3b82f6')),
@@ -124,7 +125,7 @@ const PacienteDetalles = () => {
                     id: `rx-${rx.id}`,
                     type: 'Receta Médica',
                     date: rx.date,
-                    time: rx.createdAt ? new Date(rx.createdAt).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }) : '',
+                    time: rx.createdAt ? new Date(rx.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : '',
                     notes: rx.medications.map(m => `${m.name} ${m.dose}`).join(', '),
                     details: rx, // Keep full object for detailed render
                     icon: FileText,
@@ -138,7 +139,7 @@ const PacienteDetalles = () => {
                     id: `ex-${ex.id}`,
                     type: `Examen: ${ex.type}`,
                     date: ex.date,
-                    time: ex.createdAt ? new Date(ex.createdAt).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }) : '',
+                    time: ex.createdAt ? new Date(ex.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : '',
                     notes: `Estado: ${ex.status}`,
                     details: ex,
                     icon: Activity,
@@ -153,7 +154,7 @@ const PacienteDetalles = () => {
                     source: 'manual',
                     icon: User,
                     color: 'var(--primary)',
-                    time: h.createdAt ? new Date(h.createdAt).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }) : ''
+                    time: h.createdAt ? new Date(h.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : ''
                 }));
 
                 const patientTriage = triageData.map(t => {
@@ -162,7 +163,7 @@ const PacienteDetalles = () => {
                         id: `tri-${t.id}`,
                         type: 'Triaje',
                         date: t.date,
-                        time: appt ? appt.time : (t.createdAt ? new Date(t.createdAt).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' }) : ''),
+                        time: appt ? formatTime(appt.time) : (t.createdAt ? new Date(t.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : ''),
                         notes: t.notes,
                         details: t,
                         icon: Activity,

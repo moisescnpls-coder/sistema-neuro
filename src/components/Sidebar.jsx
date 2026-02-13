@@ -40,7 +40,7 @@ const Sidebar = () => {
 
   if (hasPermission('view_reports')) {
     menuItems.push({ name: 'Reportes', icon: <FileBarChart size={20} />, path: '/relatorios' });
-    menuItems.push({ name: 'Visual Analytics', icon: <FileBarChart size={20} className="rotate-90" />, path: '/analytics' });
+    menuItems.push({ name: 'Dashboard', icon: <FileBarChart size={20} className="rotate-90" />, path: '/analytics' });
   }
 
   return (

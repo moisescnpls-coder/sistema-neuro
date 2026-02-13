@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { formatTime } from '../utils/format';
 import { Users, Calendar, Activity, Search, UserPlus, ArrowRight, Clock, FileText } from 'lucide-react';
 import { dataService } from '../services/data';
 import { useNavigate } from 'react-router-dom';
@@ -399,9 +400,9 @@ const Dashboard = () => {
                                     </div>
                                     <div style={{ flex: 1 }}>
                                         <p style={{ fontWeight: '600', color: 'var(--text-main)', marginBottom: '0.2rem' }}>{appt.patientName || 'Paciente'}</p>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                                            <Clock size={14} />
-                                            <span>{appt.time}</span>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                            <Clock size={12} />
+                                            <span>{formatTime(appt.time)}</span>
                                         </div>
                                         <span style={{ display: 'inline-block', marginTop: '0.5rem', padding: '0.2rem 0.5rem', background: '#dcfce7', color: '#15803d', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase' }}>
                                             {appt.type}

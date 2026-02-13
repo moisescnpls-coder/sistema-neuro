@@ -622,7 +622,7 @@ const Pacientes = () => {
                             </FormField>
 
                             {/* Row 2 */}
-                            <FormField label="Apellidos (Completo)" required>
+                            <FormField label="Apellidos" required>
                                 <input
                                     required
                                     type="text"

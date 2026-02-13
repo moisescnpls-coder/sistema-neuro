@@ -7,6 +7,7 @@ import Modal from '../components/Modal';
 import TriageModal from '../components/TriageModal';
 import Toast from '../components/Toast';
 import { showAlert } from '../utils/alerts';
+import { formatTime } from '../utils/format';
 
 const Agenda = () => {
     const { isAdmin, hasPermission, user } = useAuth();
@@ -498,7 +499,7 @@ const Agenda = () => {
                                 }}>
                                     <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
                                         <div style={{ textAlign: 'center', minWidth: '80px' }}>
-                                            <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold' }}>{app.time}</h3>
+                                            <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold' }}>{formatTime(app.time)}</h3>
                                             <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{app.type}</span>
                                         </div>
                                         <div>
@@ -660,7 +661,7 @@ const Agenda = () => {
                                                         opacity: 0.9
                                                     }}
                                                 >
-                                                    <strong>{appt.time}</strong> {(() => {
+                                                    <strong>{formatTime(appt.time)}</strong> {(() => {
                                                         const nameParts = (appt.patientName || '').trim().split(' ');
                                                         return nameParts.length > 0 ? nameParts[nameParts.length - 1] : '';
                                                     })()}
@@ -718,7 +719,7 @@ const Agenda = () => {
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '4px' }}>
                                                 {dayAppts.slice(0, 3).map(appt => (
                                                     <div key={appt.id} style={{ fontSize: '10px', background: statusColors[appt.status], color: 'white', padding: '1px 3px', borderRadius: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                        {appt.time} {(() => {
+                                                        {formatTime(appt.time)} {(() => {
                                                             const nameParts = (appt.patientName || '').trim().split(' ');
                                                             return nameParts.length > 0 ? nameParts[nameParts.length - 1] : '';
                                                         })()}
@@ -846,13 +847,78 @@ const Agenda = () => {
                         </div>
                         <div>
                             <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Hora</label>
-                            <input
-                                type="time"
-                                required
-                                className="input-field"
-                                value={formData.time}
-                                onChange={e => setFormData({ ...formData, time: e.target.value })}
-                            />
+                            <div style={{ display: 'flex', gap: '5px' }}>
+                                <select
+                                    className="input-field"
+                                    style={{ padding: '0.5rem', flex: 1 }}
+                                    value={(() => {
+                                        if (!formData.time) return '09';
+                                        let [h] = formData.time.split(':');
+                                        let hour = parseInt(h);
+                                        if (hour === 0) return '12';
+                                        if (hour > 12) return String(hour - 12).padStart(2, '0');
+                                        if (hour === 12) return '12';
+                                        return String(hour).padStart(2, '0');
+                                    })()}
+                                    onChange={(e) => {
+                                        const newHour12 = e.target.value;
+                                        const currentMinute = formData.time ? formData.time.split(':')[1] : '00';
+                                        const currentH24 = formData.time ? parseInt(formData.time.split(':')[0]) : 9;
+                                        const isPM = currentH24 >= 12;
+
+                                        let newH24;
+                                        if (parseInt(newHour12) === 12) {
+                                            newH24 = isPM ? 12 : 0;
+                                        } else {
+                                            newH24 = isPM ? parseInt(newHour12) + 12 : parseInt(newHour12);
+                                        }
+                                        setFormData({ ...formData, time: `${String(newH24).padStart(2, '0')}:${currentMinute}` });
+                                    }}
+                                >
+                                    {Array.from({ length: 12 }, (_, i) => i + 1).map(h => (
+                                        <option key={h} value={String(h).padStart(2, '0')}>{String(h).padStart(2, '0')}</option>
+                                    ))}
+                                </select>
+                                <span style={{ alignSelf: 'center', fontWeight: 'bold' }}>:</span>
+                                <select
+                                    className="input-field"
+                                    style={{ padding: '0.5rem', flex: 1 }}
+                                    value={formData.time ? formData.time.split(':')[1] : '00'}
+                                    onChange={(e) => {
+                                        const newMin = e.target.value;
+                                        const currentH = formData.time ? formData.time.split(':')[0] : '09';
+                                        setFormData({ ...formData, time: `${currentH}:${newMin}` });
+                                    }}
+                                >
+                                    {['00', '15', '30', '45'].map(m => (
+                                        <option key={m} value={m}>{m}</option>
+                                    ))}
+                                </select>
+                                <select
+                                    className="input-field"
+                                    style={{ padding: '0.5rem', flex: 1 }}
+                                    value={(() => {
+                                        if (!formData.time) return 'AM';
+                                        const h = parseInt(formData.time.split(':')[0]);
+                                        return h >= 12 ? 'PM' : 'AM';
+                                    })()}
+                                    onChange={(e) => {
+                                        const newPeriod = e.target.value;
+                                        const currentMinute = formData.time ? formData.time.split(':')[1] : '00';
+                                        let h24 = parseInt(formData.time ? formData.time.split(':')[0] : '9');
+
+                                        if (newPeriod === 'AM') {
+                                            if (h24 >= 12) h24 -= 12;
+                                        } else { // PM
+                                            if (h24 < 12) h24 += 12;
+                                        }
+                                        setFormData({ ...formData, time: `${String(h24).padStart(2, '0')}:${currentMinute}` });
+                                    }}
+                                >
+                                    <option value="AM">AM</option>
+                                    <option value="PM">PM</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
@@ -1038,7 +1104,7 @@ const Agenda = () => {
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', paddingLeft: '1.25rem' }}>
                                     <Clock size={14} color="var(--text-muted)" />
-                                    <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>{appt.time}</span>
+                                    <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>{formatTime(appt.time)}</span>
                                     <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>•</span>
                                     <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>{appt.type}</span>
                                 </div>

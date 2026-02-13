@@ -8,6 +8,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { dataService } from '../services/data';
 import { showAlert } from '../utils/alerts';
+import { formatTime } from '../utils/format';
 import TriageModal from '../components/TriageModal';
 import Modal from '../components/Modal';
 
@@ -1405,7 +1406,7 @@ const Atencion = () => {
                                                 {new Date(appt.date + 'T00:00:00').toLocaleDateString()}
                                             </span>
                                             <span className={`text-xs ${isCur ? 'text-blue-500' : 'text-gray-500'} flex items-center gap-1 font-medium`}>
-                                                <Clock size={12} /> {appt.time}
+                                                <Clock size={12} /> {formatTime(appt.time)}
                                             </span>
                                         </div>
                                         {isCur && <div className="mt-1.5 w-2.5 h-2.5 bg-blue-500 rounded-full shadow-sm ring-2 ring-blue-200" />}
