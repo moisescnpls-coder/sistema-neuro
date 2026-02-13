@@ -32,7 +32,8 @@ const Configuracion = () => {
             const data = await dataService.getSettings();
             setSettings(data);
             if (data.logoUrl) {
-                setLogoPreview(`http://127.0.0.1:5000/${data.logoUrl}`);
+                // Use relative path for VPS/HTTPS compatibility
+                setLogoPreview(data.logoUrl.startsWith('http') ? data.logoUrl : `/${data.logoUrl}`);
             }
         } catch (error) {
             console.error('Error loading settings:', error);
@@ -76,7 +77,7 @@ const Configuracion = () => {
             const updated = await dataService.saveSettings(formData);
             setSettings(updated);
             if (updated.logoUrl) {
-                setLogoPreview(`http://127.0.0.1:5000/${updated.logoUrl}`);
+                setLogoPreview(updated.logoUrl.startsWith('http') ? updated.logoUrl : `/${updated.logoUrl}`);
             }
             showAlert('Configuración guardada correctamente', 'success');
         } catch (error) {
