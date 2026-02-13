@@ -1530,9 +1530,20 @@ const Clinico = () => {
                         <input
                             id="file-upload"
                             type="file"
-                            onChange={e => setFileToUpload(e.target.files[0])}
+                            onChange={e => {
+                                const file = e.target.files[0];
+                                if (file && file.size > 10 * 1024 * 1024) {
+                                    showAlert('El archivo excede el límite de 10MB', 'error');
+                                    e.target.value = null;
+                                    return;
+                                }
+                                setFileToUpload(file);
+                            }}
                             style={{ display: 'none' }}
                         />
+                        <p style={{ fontSize: '0.85rem', color: '#4b5563', marginTop: '0.5rem', textAlign: 'center', fontWeight: '500' }}>
+                            Tamaño máximo de archivo: 10 MB
+                        </p>
                     </div>
 
                     <textarea

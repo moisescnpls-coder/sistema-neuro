@@ -62,3 +62,11 @@ De ahora en adelante, cada vez que yo te avise de una "Nueva Actualización", so
 2.  Darle doble clic al archivo **`ACTUALIZAR.bat`**.
 
 ¡Y listo! El sistema bajará los cambios, se reconstruirá y se reiniciará solo en menos de 1 minuto.
+
+---
+
+## 3. Nota Importante para Versión 1.2.1 (Febrero 2026)
+
+Esta actualización reorganiza la carpeta de archivos.
+- Si ves que no aparecen los exámenes antiguos, revisa si quedaron en `backend/uploads`.
+- El sistema intentará corregirlo solo, pero si falta algo, mueve el contenido de `backend/uploads` a la carpeta `uploads` (en la raíz).

@@ -10,8 +10,8 @@ const multer = require('multer');
 // path was already required at the top
 const fs = require('fs');
 
-// Ensure uploads directory structure exists - Standardized to backend/uploads
-const baseUploadDir = path.join(__dirname, 'uploads');
+// Ensure uploads directory structure exists - Standardized to project root uploads
+const baseUploadDir = path.join(__dirname, '../uploads');
 const uploadDirs = [
     path.join(baseUploadDir, 'patients'),
     path.join(baseUploadDir, 'exams'),
@@ -926,9 +926,31 @@ app.get('/api/exams/:patientId', (req, res) => {
         db.all(`SELECT * FROM exam_results WHERE examId IN (${examIds.join(',')})`, [], (err, results) => {
             if (err) return res.json(exams); // Return exams without results if error
 
+            console.log(`[DEBUG] Checking ${results.length} exam results for existence...`);
+
+            // Check if files exist
+            const resultsWithStatus = results.map(r => {
+                // If path is relative like "uploads/exams/file.pdf", strict check relative to backend/ root or project root?
+                // We standardized to project root "uploads/exams" in previous steps
+                // Our baseUploadDir is path.join(__dirname, '../uploads');
+                // so we can resolve: path.join(__dirname, '..', r.filePath) if r.filePath starts with 'uploads/'
+
+                let fullPath;
+                if (r.filePath && r.filePath.startsWith('uploads')) {
+                    fullPath = path.join(__dirname, '..', r.filePath);
+                } else {
+                    fullPath = r.filePath; // absolute or weird path
+                }
+
+                return {
+                    ...r,
+                    fileExists: fs.existsSync(fullPath)
+                };
+            });
+
             const examsWithResults = exams.map(e => ({
                 ...e,
-                results: results.filter(r => r.examId === e.id)
+                results: resultsWithStatus.filter(r => r.examId === e.id)
             }));
             res.json(examsWithResults);
         });
@@ -961,24 +983,119 @@ app.post('/api/exams/:id/upload', authenticateToken, upload.single('file'), (req
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
     const examId = req.params.id;
-    const filePath = req.file.path.replace(/\\/g, '/'); // Normalize path
-    const originalName = req.file.originalname;
-    const { note } = req.body; // Extract note
+    const { note } = req.body;
     const uploadDate = new Date().toISOString();
 
-    // Use correct column 'examId' (as defined in db.js) and 'note'
-    db.run("INSERT INTO exam_results (examId, filePath, originalName, note, uploadDate) VALUES (?, ?, ?, ?, ?)",
-        [examId, filePath, originalName, note || '', uploadDate],
-        function (err) {
-            if (err) return res.status(400).json({ error: err.message });
+    db.get("SELECT e.type, e.patientId, p.firstName, p.lastName FROM exams e JOIN patients p ON e.patientId = p.id WHERE e.id = ?", [examId], (err, row) => {
 
-            // Update exam status but keep it open for more uploads if needed, or just mark ready
-            // Let's mark as ready if not already
-            db.run("UPDATE exams SET status = 'Resultados Listos' WHERE id = ?", [examId]);
+        // Helper to fix encoding issues (typical latin1 vs utf8 in headers)
+        const fixEncoding = (str) => {
+            try {
+                return Buffer.from(str, 'latin1').toString('utf8');
+            } catch (e) { return str; }
+        };
 
-            res.json({ success: true, filePath, originalName, note: note || '' });
+        // Helper to safely move file
+        const moveFile = (src, dest) => {
+            try {
+                fs.renameSync(src, dest);
+            } catch (err) {
+                if (err.code === 'EXDEV') {
+                    fs.copyFileSync(src, dest);
+                    fs.unlinkSync(src);
+                } else {
+                    throw err;
+                }
+            }
+        };
+
+        const originalNameFixed = fixEncoding(req.file.originalname);
+
+        if (err || !row) {
+            console.error("Error/NoRow fetching details:", err);
+            // Fallback strategy
+            // If we can't get details, just move to uploads/exams to be safe
+            // and use a timestamped name
+            const timestamp = Date.now();
+            const safeName = `${timestamp}_${path.basename(req.file.path)}`;
+            const targetDir = path.join(baseUploadDir, 'exams');
+            if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
+
+            const newPath = path.join(targetDir, safeName);
+
+            try {
+                moveFile(req.file.path, newPath);
+                // Force forward slashes for URL
+                const dbPath = `uploads/exams/${safeName}`;
+                saveResult(dbPath, originalNameFixed);
+            } catch (moveErr) {
+                console.error("Fallback move failed:", moveErr);
+                // Last resort: verify where it is
+                // req.file.path should be valid
+                // We just need to ensure dbPath is relative to backend root and uses /
+                // assumption: req.file.path is inside backend/uploads/...
+                const relative = path.relative(__dirname, req.file.path).replace(/\\/g, '/');
+                saveResult(relative, originalNameFixed);
+            }
+            return;
         }
-    );
+
+        // Sanitize
+        const sanitize = (str) => (str || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]/g, "");
+        const pName = sanitize(row.lastName) + "_" + sanitize(row.firstName);
+        const eType = sanitize(row.type);
+        const dateStr = new Date().toISOString().split('T')[0];
+        const ext = path.extname(originalNameFixed);
+        const suffix = Math.random().toString(36).substring(2, 7);
+
+        const newFilename = `${pName}_${eType}_${dateStr}_${suffix}${ext}`;
+
+        const targetDir = path.join(baseUploadDir, 'exams');
+        if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
+
+        const newPath = path.join(targetDir, newFilename);
+
+        try {
+            moveFile(req.file.path, newPath);
+            const dbPath = `uploads/exams/${newFilename}`;
+            saveResult(dbPath, originalNameFixed);
+        } catch (renameErr) {
+            console.error("Error moving file:", renameErr);
+            // Fallback as above
+            const timestamp = Date.now();
+            const safeBackupName = `${timestamp}_${sanitize(originalNameFixed)}`;
+            const backupPath = path.join(targetDir, safeBackupName);
+            try {
+                fs.copyFileSync(req.file.path, backupPath); // Try copy if move failed completely
+                const dbPath = `uploads/exams/${safeBackupName}`;
+                saveResult(dbPath, originalNameFixed);
+            } catch (e2) {
+                const relative = path.relative(__dirname, req.file.path).replace(/\\/g, '/');
+                saveResult(relative, originalNameFixed);
+            }
+        }
+    });
+
+    function saveResult(filePath, originalName) {
+        // Ensure strictly forward slashes for DB URLs
+        const finalPath = filePath.replace(/\\/g, '/');
+
+        db.run(
+            "INSERT INTO exam_results (examId, filePath, originalName, uploadDate, note) VALUES (?, ?, ?, ?, ?)",
+            [examId, finalPath, originalName, uploadDate, note],
+            function (err) {
+                if (err) {
+                    console.error("Error saving result to DB:", err);
+                    return res.status(500).json({ error: "Database error" });
+                }
+
+                // Also update exam status
+                db.run("UPDATE exams SET status = 'Resultados Listos' WHERE id = ?", [examId]);
+
+                res.json({ message: "File uploaded successfully", resultId: this.lastID, filePath: finalPath });
+            }
+        );
+    }
 });
 
 

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
     FileText, Activity, Save, CheckCircle,
     ArrowLeft, Stethoscope, Pill, ClipboardList, AlertCircle,
-    Calendar, User, Clock, Plus, Trash2, X, Printer, Edit, Upload, Eye, CalendarClock
+    Calendar, User, Clock, Plus, Trash2, X, Printer, Edit, Upload, Eye, CalendarClock, FileWarning
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { dataService } from '../services/data';
@@ -1757,46 +1757,57 @@ const Atencion = () => {
                                         </div>
 
                                         {/* Results List */}
-                                        {e.results && e.results.length > 0 && (
-                                            <div className="flex flex-col gap-1 mt-2 pt-2 border-t border-gray-50 mb-2">
-                                                {e.results.map((res, idx) => (
+                                        <div className="flex flex-col gap-1 mt-2 pt-2 border-t border-gray-50 mb-1">
+                                            {e.results.map((res, idx) => {
+                                                const fileExists = res.fileExists !== false; // Default to true if undefined (legacy)
+                                                return (
                                                     <div
                                                         key={res.id}
-                                                        className="flex items-center justify-between bg-green-50 px-3 py-2 rounded-lg border border-green-200 shadow-sm cursor-pointer hover:bg-green-100 transition-colors"
-                                                        style={{ padding: '5px' }}
-                                                        onClick={(ev) => { ev.stopPropagation(); window.open(`http://${window.location.hostname}:5000/${res.filePath}`, '_blank'); }}
+                                                        className={`flex items-center justify-between px-2 py-1.5 rounded border transition-colors ${fileExists ? 'bg-green-50/50 border-green-100 hover:bg-green-50' : 'bg-green-50/50 border-green-100 hover:bg-green-50'}`} // Always green for now
+                                                        style={{ padding: '5px', margin: '0 5px' }} // Horizontal only, use gap for vertical
+                                                        onClick={(ev) => {
+                                                            ev.stopPropagation();
+                                                            window.open(`http://${window.location.hostname}:5000/${res.filePath}`, '_blank');
+                                                        }}
+                                                        title="Clic para ver resultado"
                                                     >
-                                                        <div className="flex flex-col overflow-hidden mr-2">
-                                                            <div className="flex items-center gap-1 text-xs font-bold text-green-700 truncate">
-                                                                <Eye size={12} /> Archivo {idx + 1}
+                                                        <div className="flex items-center gap-2 overflow-hidden mr-2">
+                                                            <div className="flex-shrink-0 text-green-600">
+                                                                <FileText size={14} />
                                                             </div>
-                                                            {res.note && <span className="text-[10px] text-gray-500 italic truncate" title={res.note}>{res.note}</span>}
+                                                            <div className="flex flex-col min-w-0">
+                                                                <span className="text-xs font-medium text-gray-700 truncate hover:text-blue-600 hover:underline">
+                                                                    {res.originalName || `Archivo ${idx + 1}`}
+                                                                </span>
+                                                                {res.note && <span className="text-[10px] text-gray-400 italic truncate">{res.note}</span>}
+                                                                {!fileExists && <span className="text-[9px] text-red-500 font-bold uppercase">No encontrado</span>}
+                                                            </div>
                                                         </div>
                                                         <button
                                                             onClick={(ev) => { ev.stopPropagation(); handleDeleteResult(res.id); }}
-                                                            className="text-red-400 hover:text-red-600 p-1 rounded-full hover:bg-red-50 transition-colors"
-                                                            title="Eliminar archivo"
+                                                            className="text-gray-400 hover:text-red-500 p-1 rounded hover:bg-red-50 transition-colors"
+                                                            title="Eliminar registro"
                                                         >
-                                                            <X size={16} />
+                                                            <X size={14} />
                                                         </button>
                                                     </div>
-                                                ))}
-                                            </div>
-                                        )}
+                                                );
+                                            })}
+                                        </div>
 
-                                        <div className="grid grid-cols-3 gap-2 mt-1" style={{ padding: '5px' }}>
+                                        <div className="grid grid-cols-3 gap-2 mt-2 px-1" style={{ padding: '5px' }}>
                                             {/* Upload Button */}
-                                            <button onClick={(ev) => { ev.stopPropagation(); setUploadExamId(e.id); }} className="flex items-center justify-center gap-1 text-blue-600 bg-blue-50 hover:bg-blue-100 py-3 rounded-lg text-xs font-bold uppercase tracking-wide transition-colors" title="Subir Resultados">
+                                            <button onClick={(ev) => { ev.stopPropagation(); setUploadExamId(e.id); }} className="flex items-center justify-center gap-1 text-blue-600 bg-blue-50 hover:bg-blue-100 py-1.5 rounded text-xs font-semibold transition-colors" title="Subir Resultados">
                                                 <Upload size={14} /> Subir
                                             </button>
 
                                             {/* Edit Button */}
-                                            <button onClick={(ev) => { ev.stopPropagation(); setEditExam(e); }} className="flex items-center justify-center gap-1 text-amber-600 bg-amber-50 hover:bg-amber-100 py-3 rounded-lg text-xs font-bold uppercase tracking-wide transition-colors" title="Editar">
+                                            <button onClick={(ev) => { ev.stopPropagation(); setEditExam(e); }} className="flex items-center justify-center gap-1 text-amber-600 bg-amber-50 hover:bg-amber-100 py-1.5 rounded text-xs font-semibold transition-colors" title="Editar">
                                                 <Edit size={14} /> Editar
                                             </button>
 
                                             {/* Delete Button */}
-                                            <button onClick={(ev) => { ev.stopPropagation(); handleDeleteExam(e.id); }} className="flex items-center justify-center gap-1 text-red-600 bg-red-50 hover:bg-red-100 py-3 rounded-lg text-xs font-bold uppercase tracking-wide transition-colors" title="Eliminar">
+                                            <button onClick={(ev) => { ev.stopPropagation(); handleDeleteExam(e.id); }} className="flex items-center justify-center gap-1 text-red-600 bg-red-50 hover:bg-red-100 py-1.5 rounded text-xs font-semibold transition-colors" title="Eliminar">
                                                 <Trash2 size={14} /> Borrar
                                             </button>
                                         </div>
@@ -1964,7 +1975,38 @@ const Atencion = () => {
                     <div style={{ marginBottom: '1.5rem', border: '2px dashed #ccc', padding: '2rem', textAlign: 'center', borderRadius: '0.5rem' }}>
                         <input
                             type="file"
-                            onChange={e => setFileToUpload(e.target.files[0])}
+                            accept=".pdf, .doc, .docx, .jpg, .jpeg, .png, .gif, .webp"
+                            onChange={e => {
+                                const file = e.target.files[0];
+                                if (!file) return;
+
+                                // Validate size (10MB)
+                                if (file.size > 10 * 1024 * 1024) {
+                                    showAlert('El archivo excede el límite de 10MB', 'error');
+                                    e.target.value = null;
+                                    return;
+                                }
+
+                                // Validate type
+                                const validTypes = [
+                                    'application/pdf',
+                                    'application/msword',
+                                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                                    'image/jpeg', 'image/png', 'image/gif', 'image/webp'
+                                ];
+
+                                // Loose check for msword/office nuances or just rely on extension if type fails
+                                const validExtensions = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.gif', '.webp'];
+                                const fileExt = '.' + file.name.split('.').pop().toLowerCase();
+
+                                if (!validTypes.includes(file.type) && !validExtensions.includes(fileExt)) {
+                                    showAlert('Formato no soportado. Solo PDF, Word e Imágenes.', 'error');
+                                    e.target.value = null;
+                                    return;
+                                }
+
+                                setFileToUpload(file);
+                            }}
                             style={{ display: 'none' }}
                             id="file-upload"
                         />
@@ -1974,6 +2016,9 @@ const Atencion = () => {
                                 {fileToUpload ? fileToUpload.name : 'Click para seleccionar archivo'}
                             </span>
                         </label>
+                        <p style={{ fontSize: '0.85rem', color: '#4b5563', marginTop: '1rem', textAlign: 'center', fontWeight: '500' }}>
+                            Permitidos: PDF, Word, Imágenes (Max 10MB)
+                        </p>
                     </div>
                     <div style={{ marginBottom: '1.5rem' }}>
                         <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Nota (Opcional)</label>
