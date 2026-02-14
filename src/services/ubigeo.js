@@ -41,20 +41,41 @@ export const ubigeoService = {
             .map(d => d.distrito);
     },
 
-    // New helper for Province Search
-    findProvinces: (query) => {
+    // New helper: Search Province OR District
+    findLocations: (query) => {
         if (!query || query.length < 2) return [];
         const normalizedQuery = query.toLowerCase();
 
-        return provs
+        // 1. Search Provinces
+        const matchingProvs = provs
             .filter(p => p.provincia.toLowerCase().includes(normalizedQuery))
             .map(p => {
                 const dept = depts.find(d => d.id === p.departamento_id);
                 return {
+                    label: `${p.provincia} (Provincia)`,
+                    type: 'Province',
+                    department: dept ? dept.departamento : '',
                     province: p.provincia,
-                    department: dept ? dept.departamento : ''
+                    district: ''
                 };
-            })
-            .slice(0, 10); // Limit results
+            });
+
+        // 2. Search Districts
+        const matchingDists = dists
+            .filter(d => d.distrito.toLowerCase().includes(normalizedQuery))
+            .map(d => {
+                const prov = provs.find(p => p.id === d.provincia_id);
+                const dept = prov ? depts.find(dept => dept.id === prov.departamento_id) : null;
+                return {
+                    label: `${d.distrito} (Distrito)`,
+                    type: 'District',
+                    department: dept ? dept.departamento : '',
+                    province: prov ? prov.provincia : '',
+                    district: d.distrito
+                };
+            });
+
+        // 3. Combine and limit
+        return [...matchingProvs, ...matchingDists].slice(0, 15);
     }
 };

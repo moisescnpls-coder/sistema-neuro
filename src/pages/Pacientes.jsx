@@ -145,12 +145,12 @@ const Pacientes = () => {
         }
     }, [currentPatient.province]);
 
-    // Handle Province Search
+    // Handle Province/Location Search
     const handleProvSearch = (e) => {
         const query = e.target.value;
         setProvSearch(query);
         if (query.length >= 2) {
-            const results = ubigeoService.findProvinces(query);
+            const results = ubigeoService.findLocations(query); // Changed from findProvinces
             setProvSuggestions(results);
             setShowProvSuggestions(true);
         } else {
@@ -159,12 +159,12 @@ const Pacientes = () => {
         }
     };
 
-    const selectProvince = (item) => {
+    const selectLocation = (item) => {
         setCurrentPatient(prev => ({
             ...prev,
             department: item.department,
             province: item.province,
-            district: '' // Reset district as requested
+            district: item.district || '' // Set district if available (from District search)
         }));
         setProvSearch('');
         setShowProvSuggestions(false);
@@ -764,17 +764,17 @@ const Pacientes = () => {
 
                             {/* Row 8 - Ubigeo - Smart Search + Triplet */}
 
-                            {/* Province Search Helper */}
+                            {/* Province/District Search Helper */}
                             <div className="md:col-span-2" style={{ position: 'relative', marginBottom: '0.5rem' }}>
                                 <label className="block text-xs font-medium text-blue-600 mb-1">
-                                    ¿No sabes el Departamento? Busca por Provincia:
+                                    Busqueda Rápida (Busca por Provincia o Distrito):
                                 </label>
                                 <div className="relative">
                                     <input
                                         type="text"
                                         className="input-field"
                                         style={{ borderColor: '#93c5fd', background: '#eff6ff' }}
-                                        placeholder="Escribe el nombre de la provincia..."
+                                        placeholder="Escribe Provincia o Distrito..."
                                         value={provSearch}
                                         onChange={handleProvSearch}
                                         onFocus={() => provSearch.length >= 2 && setShowProvSuggestions(true)}
@@ -797,7 +797,7 @@ const Pacientes = () => {
                                             {provSuggestions.map((item, idx) => (
                                                 <div
                                                     key={idx}
-                                                    onClick={() => selectProvince(item)}
+                                                    onClick={() => selectLocation(item)}
                                                     style={{
                                                         padding: '8px 12px',
                                                         cursor: 'pointer',
@@ -806,7 +806,7 @@ const Pacientes = () => {
                                                     onMouseEnter={(e) => e.currentTarget.style.background = '#f3f4f6'}
                                                     onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
                                                 >
-                                                    <span style={{ fontWeight: 600 }}>{item.province}</span>
+                                                    <span style={{ fontWeight: 600 }}>{item.label || item.province}</span>
                                                     <span style={{ fontSize: '0.8rem', color: '#6b7280', marginLeft: '8px' }}>
                                                         ({item.department})
                                                     </span>
