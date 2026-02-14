@@ -748,12 +748,8 @@ const Pacientes = () => {
                                     onChange={(e) => setCurrentPatient({ ...currentPatient, insurance: e.target.value })}
                                 >
                                     <option value="">Seleccione</option>
-                                    <option value="SIS">SIS</option>
-                                    <option value="EsSalud">EsSalud</option>
-                                    <option value="EPS">EPS (privado vía empresa)</option>
-                                    <option value="Seguro privado">Seguro privado (Rímac, Pacífico, etc.)</option>
-                                    <option value="Particular">Particular</option>
-                                    <option value="Ninguno">Ninguno</option>
+                                    <option value="CPAM">CPAM</option>
+                                    <option value="AFP">AFP</option>
                                 </select>
                             </FormField>
 
