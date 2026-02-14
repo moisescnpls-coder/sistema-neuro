@@ -75,7 +75,23 @@ export const ubigeoService = {
                 };
             });
 
-        // 3. Combine and limit
-        return [...matchingProvs, ...matchingDists].slice(0, 15);
+        // 3. Combine and Sort and Limit
+        const allResults = [...matchingProvs, ...matchingDists];
+
+        // Sort alphabetically: Label (Name) -> Department
+        allResults.sort((a, b) => {
+            const labelA = a.province || a.district; // Name
+            const labelB = b.province || b.district;
+
+            // Primary sort: Name
+            const nameCompare = labelA.localeCompare(labelB);
+            if (nameCompare !== 0) return nameCompare;
+
+            // Secondary sort: Department
+            return a.department.localeCompare(b.department);
+        });
+
+        // Increase limit slightly to accommodate common names like "Santa..." or "San..."
+        return allResults.slice(0, 50);
     }
 };
