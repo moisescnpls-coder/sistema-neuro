@@ -80,8 +80,8 @@ export const ubigeoService = {
 
         // Sort alphabetically: Label (Name) -> Department
         allResults.sort((a, b) => {
-            const labelA = (a.province || a.district).toLowerCase();
-            const labelB = (b.province || b.district).toLowerCase();
+            const labelA = (a.district || a.province).toLowerCase();
+            const labelB = (b.district || b.province).toLowerCase();
 
             const startsA = labelA.startsWith(normalizedQuery);
             const startsB = labelB.startsWith(normalizedQuery);
