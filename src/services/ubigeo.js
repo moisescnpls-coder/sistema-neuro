@@ -80,14 +80,18 @@ export const ubigeoService = {
 
         // Sort alphabetically: Label (Name) -> Department
         allResults.sort((a, b) => {
-            const labelA = a.province || a.district; // Name
-            const labelB = b.province || b.district;
+            const labelA = (a.province || a.district).toLowerCase();
+            const labelB = (b.province || b.district).toLowerCase();
 
-            // Primary sort: Name
+            const startsA = labelA.startsWith(normalizedQuery);
+            const startsB = labelB.startsWith(normalizedQuery);
+
+            if (startsA && !startsB) return -1;
+            if (!startsA && startsB) return 1;
+
             const nameCompare = labelA.localeCompare(labelB);
             if (nameCompare !== 0) return nameCompare;
 
-            // Secondary sort: Department
             return a.department.localeCompare(b.department);
         });
 
