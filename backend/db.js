@@ -49,7 +49,9 @@ db.serialize(() => {
                 "ALTER TABLE patients ADD COLUMN department TEXT",
                 "ALTER TABLE patients ADD COLUMN province TEXT",
                 "ALTER TABLE patients ADD COLUMN district TEXT",
-                "ALTER TABLE patients ADD COLUMN diagnosis TEXT"
+                "ALTER TABLE patients ADD COLUMN diagnosis TEXT",
+                "ALTER TABLE patients ADD COLUMN occupation TEXT",
+                "ALTER TABLE patients ADD COLUMN insurance TEXT"
             ];
 
             columnsToAdd.forEach(sql => {

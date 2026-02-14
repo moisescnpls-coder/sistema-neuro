@@ -443,7 +443,8 @@ app.post('/api/patients', authenticateToken, (req, res) => {
         clinicalHistoryNumber, // NOW REQUIRED
         firstName, lastName, fullName, dni, phone, email, birthDate, gender, clinicalSummary,
         maritalStatus, documentType, registrationDate,
-        address, department, province, district
+        address, department, province, district,
+        occupation, insurance // NEW FIELDS
     } = req.body;
 
 
@@ -478,13 +479,13 @@ app.post('/api/patients', authenticateToken, (req, res) => {
                 const sql = `INSERT INTO patients (
                     firstName, lastName, fullName, dni, phone, email, birthDate, gender, clinicalSummary,
                     clinicalHistoryNumber, maritalStatus, documentType, registrationDate,
-                    address, department, province, district
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                    address, department, province, district, occupation, insurance
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
                 const params = [
                     firstName, lastName, fullName, dni, phone, email, birthDate, gender, clinicalSummary,
                     clinicalHistoryNumber.trim(), maritalStatus, documentType, registrationDate,
-                    address, department, province, district
+                    address, department, province, district, occupation, insurance
                 ];
 
 
@@ -509,7 +510,8 @@ app.put('/api/patients/:id', authenticateToken, (req, res) => {
         clinicalHistoryNumber,
         firstName, lastName, fullName, dni, phone, email, birthDate, gender, clinicalSummary,
         maritalStatus, documentType, registrationDate,
-        address, department, province, district
+        address, department, province, district,
+        occupation, insurance // NEW FIELDS
     } = req.body;
 
     // 1. Validate HC is provided
@@ -535,13 +537,13 @@ app.put('/api/patients/:id', authenticateToken, (req, res) => {
             const sql = `UPDATE patients SET 
                 firstName = ?, lastName = ?, fullName = ?, dni = ?, phone = ?, email = ?, birthDate = ?, gender = ?, clinicalSummary = ?,
                 clinicalHistoryNumber = ?, maritalStatus = ?, documentType = ?, registrationDate = ?,
-                address = ?, department = ?, province = ?, district = ?
+                address = ?, department = ?, province = ?, district = ?, occupation = ?, insurance = ?
                 WHERE id = ?`;
 
             const params = [
                 firstName, lastName, fullName, dni, phone, email, birthDate, gender, clinicalSummary,
                 clinicalHistoryNumber.trim(), maritalStatus, documentType, registrationDate,
-                address, department, province, district,
+                address, department, province, district, occupation, insurance,
                 req.params.id
             ];
 

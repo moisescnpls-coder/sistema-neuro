@@ -39,5 +39,22 @@ export const ubigeoService = {
         return dists
             .filter(d => d.provincia_id === prov.id)
             .map(d => d.distrito);
+    },
+
+    // New helper for Province Search
+    findProvinces: (query) => {
+        if (!query || query.length < 2) return [];
+        const normalizedQuery = query.toLowerCase();
+
+        return provs
+            .filter(p => p.provincia.toLowerCase().includes(normalizedQuery))
+            .map(p => {
+                const dept = depts.find(d => d.id === p.departamento_id);
+                return {
+                    province: p.provincia,
+                    department: dept ? dept.departamento : ''
+                };
+            })
+            .slice(0, 10); // Limit results
     }
 };

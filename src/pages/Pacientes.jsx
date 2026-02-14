@@ -62,11 +62,16 @@ const Pacientes = () => {
         clinicalHistoryNumber: '', maritalStatus: '', documentType: 'DNI',
         registrationDate: new Date().toISOString().split('T')[0],
         address: '', department: '', province: '', district: '',
-        clinicalSummary: ''
+        clinicalSummary: '', occupation: '', insurance: '' // Added new fields
     };
 
     const [currentPatient, setCurrentPatient] = useState(initialFormState);
     const [isEditing, setIsEditing] = useState(false);
+
+    // Province Search State
+    const [provSearch, setProvSearch] = useState('');
+    const [provSuggestions, setProvSuggestions] = useState([]);
+    const [showProvSuggestions, setShowProvSuggestions] = useState(false);
 
     // Ubigeo State
     const [departments, setDepartments] = useState([]);
@@ -139,6 +144,31 @@ const Pacientes = () => {
             setDistricts([]);
         }
     }, [currentPatient.province]);
+
+    // Handle Province Search
+    const handleProvSearch = (e) => {
+        const query = e.target.value;
+        setProvSearch(query);
+        if (query.length >= 2) {
+            const results = ubigeoService.findProvinces(query);
+            setProvSuggestions(results);
+            setShowProvSuggestions(true);
+        } else {
+            setProvSuggestions([]);
+            setShowProvSuggestions(false);
+        }
+    };
+
+    const selectProvince = (item) => {
+        setCurrentPatient(prev => ({
+            ...prev,
+            department: item.department,
+            province: item.province,
+            district: '' // Reset district as requested
+        }));
+        setProvSearch('');
+        setShowProvSuggestions(false);
+    };
 
     // Reset pagination when filters change
     useEffect(() => {
@@ -688,6 +718,7 @@ const Pacientes = () => {
                                     <option value="Casado">Casado/a</option>
                                     <option value="Viudo">Viudo/a</option>
                                     <option value="Divorciado">Divorciado/a</option>
+                                    <option value="Conviviente">Conviviente</option>
                                     <option value="Otro">Otro/a</option>
                                 </select>
                             </FormField>
@@ -700,6 +731,32 @@ const Pacientes = () => {
                                 <input type="email" className="input-field" value={currentPatient.email} onChange={(e) => setCurrentPatient({ ...currentPatient, email: e.target.value })} />
                             </FormField>
 
+                            {/* Row New - Occupation & Insurance */}
+                            <FormField label="Ocupación">
+                                <input
+                                    type="text"
+                                    className="input-field uppercase"
+                                    value={currentPatient.occupation || ''}
+                                    onChange={(e) => setCurrentPatient({ ...currentPatient, occupation: e.target.value.toUpperCase() })}
+                                    placeholder="OCUPACIÓN"
+                                />
+                            </FormField>
+                            <FormField label="Seguro de Salud">
+                                <select
+                                    className="input-field"
+                                    value={currentPatient.insurance || ''}
+                                    onChange={(e) => setCurrentPatient({ ...currentPatient, insurance: e.target.value })}
+                                >
+                                    <option value="">Seleccione</option>
+                                    <option value="SIS">SIS</option>
+                                    <option value="EsSalud">EsSalud</option>
+                                    <option value="EPS">EPS (privado vía empresa)</option>
+                                    <option value="Seguro privado">Seguro privado (Rímac, Pacífico, etc.)</option>
+                                    <option value="Particular">Particular</option>
+                                    <option value="Ninguno">Ninguno</option>
+                                </select>
+                            </FormField>
+
 
 
                             {/* Row 7 - Address full width */}
@@ -709,7 +766,61 @@ const Pacientes = () => {
                                 </FormField>
                             </div>
 
-                            {/* Row 8 - Ubigeo - Triplet needs nested grid or special handling */}
+                            {/* Row 8 - Ubigeo - Smart Search + Triplet */}
+
+                            {/* Province Search Helper */}
+                            <div className="md:col-span-2" style={{ position: 'relative', marginBottom: '0.5rem' }}>
+                                <label className="block text-xs font-medium text-blue-600 mb-1">
+                                    ¿No sabes el Departamento? Busca por Provincia:
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        className="input-field"
+                                        style={{ borderColor: '#93c5fd', background: '#eff6ff' }}
+                                        placeholder="Escribe el nombre de la provincia..."
+                                        value={provSearch}
+                                        onChange={handleProvSearch}
+                                        onFocus={() => provSearch.length >= 2 && setShowProvSuggestions(true)}
+                                    // onBlur={() => setTimeout(() => setShowProvSuggestions(false), 200)} // Delay for click
+                                    />
+                                    {showProvSuggestions && provSuggestions.length > 0 && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: '100%',
+                                            left: 0,
+                                            right: 0,
+                                            zIndex: 50,
+                                            background: 'white',
+                                            border: '1px solid #ddd',
+                                            borderRadius: '0.375rem',
+                                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                                            maxHeight: '200px',
+                                            overflowY: 'auto'
+                                        }}>
+                                            {provSuggestions.map((item, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    onClick={() => selectProvince(item)}
+                                                    style={{
+                                                        padding: '8px 12px',
+                                                        cursor: 'pointer',
+                                                        borderBottom: '1px solid #f3f4f6',
+                                                    }}
+                                                    onMouseEnter={(e) => e.currentTarget.style.background = '#f3f4f6'}
+                                                    onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
+                                                >
+                                                    <span style={{ fontWeight: 600 }}>{item.province}</span>
+                                                    <span style={{ fontSize: '0.8rem', color: '#6b7280', marginLeft: '8px' }}>
+                                                        ({item.department})
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
                             <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
                                 <FormField label="Departamento" smallLabel>
                                     <select
