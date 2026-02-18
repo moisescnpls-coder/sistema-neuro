@@ -11,7 +11,7 @@ const multer = require('multer');
 const fs = require('fs');
 
 // Ensure uploads directory structure exists - Standardized to project root uploads
-const baseUploadDir = path.join(__dirname, '../uploads');
+const baseUploadDir = path.join(__dirname, 'uploads');
 const uploadDirs = [
     path.join(baseUploadDir, 'patients'),
     path.join(baseUploadDir, 'exams'),
@@ -856,11 +856,6 @@ app.delete('/api/history/:id', authenticateToken, (req, res) => {
     });
 });
 
-
-// --- Configuración de Subida de Archivos (Multer) ---
-// (Moved to top of file)
-
-app.use('/uploads', express.static('uploads'));
 
 // --- Rutas Clínicas ---
 
