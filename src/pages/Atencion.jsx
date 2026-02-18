@@ -342,7 +342,8 @@ const Atencion = () => {
 
         try {
             const settings = await dataService.getSettings();
-            const API_HOST = `http://${window.location.hostname}:5000`;
+            const isHttps = window.location.protocol === 'https:';
+            const API_HOST = isHttps ? window.location.origin : `http://${window.location.hostname}:5000`;
             const printWindow = window.open('', '_blank');
             const logoUrl = settings.logoUrl ? `${API_HOST}/${settings.logoUrl}` : '';
             const pName = patient.fullName || `${patient.firstName} ${patient.lastName}`;
@@ -607,13 +608,14 @@ const Atencion = () => {
     const handlePrintRxNew = async (rx) => {
         try {
             const settings = await dataService.getSettings();
-            const API_HOST = `http://${window.location.hostname}:5000`;
+            const isHttps = window.location.protocol === 'https:';
+            const API_HOST = isHttps ? window.location.origin : `http://${window.location.hostname}:5000`;
             const printWindow = window.open('', '_blank');
 
             // HYBRID FIX:
             // 1. If HTTPS (VPS/Cloud), use relative path (proxied by Nginx) to avoid Mixed Content.
             // 2. If HTTP (Local Network), use absolute path with port 5000 to ensure access even if frontend is on different port.
-            const isHttps = window.location.protocol === 'https:';
+
             let logoPath = settings.logoUrl || '';
             if (logoPath && !logoPath.startsWith('/')) logoPath = `/${logoPath}`;
 

@@ -32,13 +32,11 @@ const Configuracion = () => {
             const data = await dataService.getSettings();
             setSettings(data);
             if (data.logoUrl) {
-                // HYBRID FIX: Relative for HTTPS (VPS), Absolute for HTTP (Local)
-                const isHttps = window.location.protocol === 'https:';
-                let logoPath = data.logoUrl;
-                if (!logoPath.startsWith('/')) logoPath = `/${logoPath}`;
-
-                const finalUrl = logoPath.startsWith('http') ? logoPath : (isHttps ? logoPath : `http://${window.location.hostname}:5000${logoPath}`);
-                setLogoPreview(finalUrl);
+                const logoPath = data.logoUrl.startsWith('/') ? data.logoUrl : `/${data.logoUrl}`;
+                // Always use relative path. 
+                // Local: Vite proxy handles it.
+                // VPS: Nginx handles it.
+                setLogoPreview(logoPath);
             }
         } catch (error) {
             console.error('Error loading settings:', error);
@@ -82,12 +80,8 @@ const Configuracion = () => {
             const updated = await dataService.saveSettings(formData);
             setSettings(updated);
             if (updated.logoUrl) {
-                const isHttps = window.location.protocol === 'https:';
-                let logoPath = updated.logoUrl;
-                if (!logoPath.startsWith('/')) logoPath = `/${logoPath}`;
-
-                const finalUrl = logoPath.startsWith('http') ? logoPath : (isHttps ? logoPath : `http://${window.location.hostname}:5000${logoPath}`);
-                setLogoPreview(finalUrl);
+                const logoPath = updated.logoUrl.startsWith('/') ? updated.logoUrl : `/${updated.logoUrl}`;
+                setLogoPreview(logoPath);
             }
             showAlert('Configuración guardada correctamente', 'success');
         } catch (error) {

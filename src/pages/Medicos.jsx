@@ -78,7 +78,7 @@ const Medicos = () => {
                 status: doctor.status || 'active'
             });
             if (doctor.photoUrl) {
-                setPhotoPreview(`http://127.0.0.1:5000/${doctor.photoUrl}`);
+                setPhotoPreview(`/${doctor.photoUrl}`);
             }
         } else {
             setEditingDoctor(null);
@@ -251,7 +251,7 @@ const Medicos = () => {
                             <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
                                 {doctor.photoUrl ? (
                                     <img
-                                        src={`http://127.0.0.1:5000/${doctor.photoUrl}`}
+                                        src={`/${doctor.photoUrl}`}
                                         alt={doctor.fullName}
                                         style={{
                                             width: '100px',
