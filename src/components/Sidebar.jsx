@@ -126,7 +126,7 @@ const Sidebar = () => {
       </button>
 
       <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.7rem', color: '#94a3b8', fontStyle: 'italic' }}>
-        Versión 1.3.1
+        Versión {__APP_VERSION__}
       </div>
     </div>
   );

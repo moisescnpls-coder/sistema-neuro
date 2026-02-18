@@ -159,10 +159,12 @@ app.get('/api/system-status', authenticateToken, (req, res) => {
             uploadsSize += getDirSize(localUploads);
         }
 
+        const packageJson = require('./package.json');
+
         res.json({
             dbSize,
             uploadsSize,
-            version: '1.3.1', // Debug version
+            version: packageJson.version,
             timestamp: new Date().toISOString()
         });
     } catch (error) {
