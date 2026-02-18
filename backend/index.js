@@ -11,7 +11,15 @@ const multer = require('multer');
 const fs = require('fs');
 
 // Ensure uploads directory structure exists - Standardized to project root uploads
-const baseUploadDir = path.join(__dirname, 'uploads');
+// DYNAMIC PATH: Check if root uploads exists (Local), otherwise default to backend/uploads (VPS)
+const localUploads = path.join(__dirname, '../uploads');
+const vpsUploads = path.join(__dirname, 'uploads');
+const baseUploadDir = fs.existsSync(localUploads) ? localUploads : vpsUploads;
+
+console.log('--- Upload Directory Configuration ---');
+console.log('Using Upload Directory:', baseUploadDir);
+console.log('--------------------------------------');
+
 const uploadDirs = [
     path.join(baseUploadDir, 'patients'),
     path.join(baseUploadDir, 'exams'),
@@ -39,6 +47,8 @@ const storage = multer.diskStorage({
             folder = path.join(baseUploadDir, 'prescriptions');
         } else if (req.path.includes('/doctors')) {
             folder = path.join(baseUploadDir, 'patients');
+        } else if (req.baseUrl && req.baseUrl.includes('/api/settings')) { // Add case for settings/logo
+            folder = path.join(baseUploadDir, 'temp');
         }
 
         cb(null, folder);
@@ -62,9 +72,12 @@ const fileFilter = (req, file, cb) => {
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ];
 
+    console.log('[DEBUG] File Upload:', file.originalname, 'Mimetype:', file.mimetype);
+
     if (allowedMimes.includes(file.mimetype)) {
         cb(null, true);
     } else {
+        console.error('[ERROR] File rejected:', file.originalname, 'Mimetype:', file.mimetype);
         cb(new Error('Tipo de archivo no permitido. Solo se permiten imágenes, PDF y documentos Word.'), false);
     }
 };
@@ -88,6 +101,7 @@ const PORT = process.env.PORT || 5000; // Updated default port to 5000
 app.use(compression()); // Enable GZIP compression for all responses
 app.use(cors());
 app.use(express.json());
+
 app.use('/uploads', express.static(baseUploadDir));
 
 // --- Middleware de Autenticação ---
@@ -117,6 +131,45 @@ const logAction = (user, action, details) => {
         }
     );
 };
+
+// --- Rota de Estado del Sistema (DEBUG PRIORITY) ---
+app.get('/api/system-status', authenticateToken, (req, res) => {
+    // Optional: Check if admin
+    // if (req.user.role !== 'admin') return res.status(403).json({ error: "Access denied" });
+
+    try {
+        // DB Size: Check actual filename used in db.js
+        const dbPath = path.join(__dirname, 'sistema_neuro.db');
+        const dbExists = fs.existsSync(dbPath);
+        const dbSize = dbExists ? fs.statSync(dbPath).size : 0;
+
+        // Uploads Size: Check both potential locations (VPS structure vs Local structure)
+        let uploadsSize = 0;
+        const vpsUploads = path.join(__dirname, 'uploads'); // VPS: backend/uploads
+        const localUploads = path.join(__dirname, '../uploads'); // Local: root/uploads
+
+
+
+        if (fs.existsSync(vpsUploads)) {
+            uploadsSize += getDirSize(vpsUploads);
+        }
+
+        // If local folder exists and is different from vps folder (avoid double counting if symlinked)
+        if (fs.existsSync(localUploads) && path.resolve(vpsUploads) !== path.resolve(localUploads)) {
+            uploadsSize += getDirSize(localUploads);
+        }
+
+        res.json({
+            dbSize,
+            uploadsSize,
+            version: '1.3.1', // Debug version
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error("Error getting system status:", error);
+        res.status(500).json({ error: "Failed to get system status" });
+    }
+});
 
 // --- Rota de Estatísticas (Dashboard) ---
 app.get('/api/stats', authenticateToken, (req, res) => {
@@ -1708,6 +1761,14 @@ app.get('/api/system-status', authenticateToken, (req, res) => {
         if (fs.existsSync(localUploads) && path.resolve(vpsUploads) !== path.resolve(localUploads)) {
             uploadsSize += getDirSize(localUploads);
         }
+
+        // Debug Logs - BEFORE sending response
+        console.log('--- System Status Debug ---');
+        console.log('DB Path:', dbPath, '| Exists:', fs.existsSync(dbPath), '| Size:', dbSize);
+        console.log('VPS Uploads:', vpsUploads, '| Exists:', fs.existsSync(vpsUploads));
+        console.log('Local Uploads:', localUploads, '| Exists:', fs.existsSync(localUploads));
+        console.log('Total Uploads Size:', uploadsSize);
+        console.log('---------------------------');
 
         res.json({
             dbSize,

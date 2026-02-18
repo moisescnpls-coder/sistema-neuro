@@ -29,12 +29,14 @@ const Configuracion = () => {
         if (isAdmin) loadSystemStatus();
     }, [isAdmin]);
 
-    const loadSystemStatus = async () => {
+    const loadSystemStatus = async (manual = false) => {
         try {
             const status = await dataService.getSystemStatus();
             setSystemStatus(status);
+            if (manual) showAlert('Estado del sistema actualizado', 'success');
         } catch (error) {
             console.error("Failed to load system status", error);
+            if (manual) showAlert('Error al actualizar estado', 'error');
         }
     };
 
@@ -312,9 +314,9 @@ const Configuracion = () => {
                 <div className="card" style={{ maxWidth: '900px', background: '#f8fafc', border: '1px solid #e2e8f0', marginTop: '1rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                         <h3 style={{ margin: 0, color: 'var(--text-dark)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Server size={20} /> Estado del Sistema
+                            <Server size={20} /> Estado del Sistema {systemStatus.version && <span style={{ fontSize: '0.7em', color: '#64748b' }}>(v{systemStatus.version})</span>}
                         </h3>
-                        <button onClick={loadSystemStatus} className="btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>
+                        <button onClick={() => loadSystemStatus(true)} className="btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>
                             Actualizar
                         </button>
                     </div>
