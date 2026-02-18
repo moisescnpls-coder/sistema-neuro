@@ -1,4 +1,4 @@
-const API_URL = `http://${window.location.hostname}:5000/api`;
+const API_URL = `/api`;
 
 const calculateAge = (birthDate) => {
     if (!birthDate) return '';
