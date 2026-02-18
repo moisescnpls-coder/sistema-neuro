@@ -1667,6 +1667,59 @@ if (fs.existsSync(distPath)) {
 
 
 
+// --- System Status Monitoring ---
+
+const getDirSize = (dirPath) => {
+    let size = 0;
+    if (fs.existsSync(dirPath)) {
+        const files = fs.readdirSync(dirPath);
+        files.forEach(file => {
+            const filePath = path.join(dirPath, file);
+            const stats = fs.statSync(filePath);
+            if (stats.isDirectory()) {
+                size += getDirSize(filePath);
+            } else {
+                size += stats.size;
+            }
+        });
+    }
+    return size;
+};
+
+app.get('/api/system-status', authenticateToken, (req, res) => {
+    // Optional: Check if admin
+    // if (req.user.role !== 'admin') return res.status(403).json({ error: "Access denied" });
+
+    try {
+        // DB Size: Check actual filename used in db.js
+        const dbPath = path.join(__dirname, 'sistema_neuro.db');
+        const dbSize = fs.existsSync(dbPath) ? fs.statSync(dbPath).size : 0;
+
+        // Uploads Size: Check both potential locations (VPS structure vs Local structure)
+        let uploadsSize = 0;
+        const vpsUploads = path.join(__dirname, 'uploads'); // VPS: backend/uploads
+        const localUploads = path.join(__dirname, '../uploads'); // Local: root/uploads
+
+        if (fs.existsSync(vpsUploads)) {
+            uploadsSize += getDirSize(vpsUploads);
+        }
+
+        // If local folder exists and is different from vps folder (avoid double counting if symlinked)
+        if (fs.existsSync(localUploads) && path.resolve(vpsUploads) !== path.resolve(localUploads)) {
+            uploadsSize += getDirSize(localUploads);
+        }
+
+        res.json({
+            dbSize,
+            uploadsSize,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error("Error getting system status:", error);
+        res.status(500).json({ error: "Failed to get system status" });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     console.log(`Access form other computers via: http://localhost:${PORT}`);

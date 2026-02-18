@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Building2, Save, Upload, Image as ImageIcon, Database } from 'lucide-react';
+import { Building2, Save, Upload, Image as ImageIcon, Database, Server } from 'lucide-react';
 import { dataService } from '../services/data';
 import { showAlert } from '../utils/alerts';
 import { useAuth } from '../context/AuthContext';
@@ -22,10 +22,21 @@ const Configuracion = () => {
     const [logoPreview, setLogoPreview] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
+    const [systemStatus, setSystemStatus] = useState({ dbSize: 0, uploadsSize: 0 });
 
     useEffect(() => {
         loadSettings();
-    }, []);
+        if (isAdmin) loadSystemStatus();
+    }, [isAdmin]);
+
+    const loadSystemStatus = async () => {
+        try {
+            const status = await dataService.getSystemStatus();
+            setSystemStatus(status);
+        } catch (error) {
+            console.error("Failed to load system status", error);
+        }
+    };
 
     const loadSettings = async () => {
         try {
@@ -292,6 +303,48 @@ const Configuracion = () => {
                             <Database size={16} />
                             Realizar Backup
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {/* System Status Card */}
+            {(isAdmin) && (
+                <div className="card" style={{ maxWidth: '900px', background: '#f8fafc', border: '1px solid #e2e8f0', marginTop: '1rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                        <h3 style={{ margin: 0, color: 'var(--text-dark)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <Server size={20} /> Estado del Sistema
+                        </h3>
+                        <button onClick={loadSystemStatus} className="btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>
+                            Actualizar
+                        </button>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                        {/* Database Stats */}
+                        <div style={{ padding: '1rem', background: 'white', borderRadius: 'var(--radius-md)', border: '1px solid #e2e8f0' }}>
+                            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Base de Datos (SQLite)</div>
+                            <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: systemStatus.dbSize > 100 * 1024 * 1024 ? '#dc2626' : '#059669' }}>
+                                {(systemStatus.dbSize / (1024 * 1024)).toFixed(2)} MB
+                            </div>
+                            <div style={{ width: '100%', height: '4px', background: '#e5e7eb', marginTop: '0.5rem', borderRadius: '2px' }}>
+                                <div style={{
+                                    width: `${Math.min((systemStatus.dbSize / (500 * 1024 * 1024)) * 100, 100)}%`,
+                                    height: '100%',
+                                    background: systemStatus.dbSize > 100 * 1024 * 1024 ? '#dc2626' : '#059669',
+                                    borderRadius: '2px'
+                                }}></div>
+                            </div>
+                        </div>
+
+                        {/* Uploads Stats */}
+                        <div style={{ padding: '1rem', background: 'white', borderRadius: 'var(--radius-md)', border: '1px solid #e2e8f0' }}>
+                            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Archivos (Uploads)</div>
+                            <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#2563eb' }}>
+                                {(systemStatus.uploadsSize / (1024 * 1024)).toFixed(2)} MB
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                                Aprox. {(systemStatus.uploadsSize / (1024 * 1024 * 1024)).toFixed(3)} GB
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

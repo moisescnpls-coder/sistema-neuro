@@ -510,6 +510,14 @@ export const dataService = {
         return await res.json();
     },
 
+    getSystemStatus: async () => {
+        const res = await fetch(`${API_URL}/system-status`, { // Fixed URL to match backend
+            headers: authHeader()
+        });
+        if (!res.ok) throw new Error('Error fetching system status');
+        return await res.json();
+    },
+
     // Doctors/Staff
     getDoctors: async () => {
         const res = await fetch(`${API_URL}/doctors`, { headers: authHeader() });
