@@ -342,8 +342,8 @@ const Atencion = () => {
 
         try {
             const settings = await dataService.getSettings();
-            const isHttps = window.location.protocol === 'https:';
-            const API_HOST = isHttps ? window.location.origin : `http://${window.location.hostname}:5000`;
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const API_HOST = isLocal ? `http://${window.location.hostname}:5000` : window.location.origin;
             const printWindow = window.open('', '_blank');
             const logoUrl = settings.logoUrl ? `${API_HOST}/${settings.logoUrl}` : '';
             const pName = patient.fullName || `${patient.firstName} ${patient.lastName}`;
@@ -608,8 +608,8 @@ const Atencion = () => {
     const handlePrintRxNew = async (rx) => {
         try {
             const settings = await dataService.getSettings();
-            const isHttps = window.location.protocol === 'https:';
-            const API_HOST = isHttps ? window.location.origin : `http://${window.location.hostname}:5000`;
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const API_HOST = isLocal ? `http://${window.location.hostname}:5000` : window.location.origin;
             const printWindow = window.open('', '_blank');
 
             // HYBRID FIX:
@@ -1777,7 +1777,7 @@ const Atencion = () => {
                                                         style={{ padding: '5px', margin: '0 5px' }} // Horizontal only, use gap for vertical
                                                         onClick={(ev) => {
                                                             ev.stopPropagation();
-                                                            window.open(`http://${window.location.hostname}:5000/${res.filePath}`, '_blank');
+                                                            window.open(`/${res.filePath}`, '_blank');
                                                         }}
                                                         title="Clic para ver resultado"
                                                     >

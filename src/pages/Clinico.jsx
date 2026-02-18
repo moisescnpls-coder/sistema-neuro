@@ -243,8 +243,8 @@ const Clinico = () => {
     const handlePrintRx = async (rx) => {
         try {
             const settings = await dataService.getSettings();
-            const isHttps = window.location.protocol === 'https:';
-            const API_HOST = isHttps ? window.location.origin : `http://${window.location.hostname}:5000`;
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const API_HOST = isLocal ? `http://${window.location.hostname}:5000` : window.location.origin;
             const printWindow = window.open('', '', 'height=800,width=1200');
 
             const logoUrl = settings.logoUrl ? `${API_HOST}/${settings.logoUrl}` : '';
@@ -639,8 +639,8 @@ const Clinico = () => {
     const handlePrintExam = async (exam) => {
         try {
             const settings = await dataService.getSettings();
-            const isHttps = window.location.protocol === 'https:';
-            const API_HOST = isHttps ? window.location.origin : `http://${window.location.hostname}:5000`;
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const API_HOST = isLocal ? `http://${window.location.hostname}:5000` : window.location.origin;
             const printWindow = window.open('', '', 'height=800,width=1000');
 
             const logoUrl = settings.logoUrl ? `${API_HOST}/${settings.logoUrl}` : '';
