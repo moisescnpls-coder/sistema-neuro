@@ -137,7 +137,7 @@ const Login = () => {
                 </form>
 
                 <div style={{ marginTop: '2rem', fontSize: '0.8rem', color: 'var(--text-light)' }}>
-                    v1.2.1
+                    v1.3.0
                 </div>
             </div>
         </div>

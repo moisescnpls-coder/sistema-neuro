@@ -6,6 +6,15 @@ O formato é baseado em [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 e este projeto adere ao [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.3.0] - 2026-02-18
+
+### Nuevas Funcionalidades
+- **Registro de Pacientes**: Añadido campo "Ocupación".
+- **Estado Civil**: Añadida opción "Conviviente".
+- **Seguro**: Añadido campo "Seguro" con opciones (CPAM, AFP, Otro).
+- **Búsqueda Avanzada**: Mejorada la búsqueda de Provincia/Distrito (Ubigeo) con autocompletado optimizado.
+- **API**: Endpoints actualizados para soportar nuevos campos de pacientes.
+
 ## [1.2.1] - 2026-02-13
 
 ### Correcciones (Crítico)
