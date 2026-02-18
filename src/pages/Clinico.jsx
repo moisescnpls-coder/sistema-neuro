@@ -1312,7 +1312,7 @@ const Clinico = () => {
                                                     {ex.results.map(r => (
                                                         <div key={r.id} style={{ display: 'flex', alignItems: 'center', marginBottom: '4px', flexWrap: 'wrap' }}>
                                                             <a
-                                                                href={`http://localhost:5000/${r.filePath}`}
+                                                                href={`/${r.filePath}`}
                                                                 target="_blank"
                                                                 rel="noreferrer"
                                                                 style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--primary)', fontSize: '0.9rem', textDecoration: 'none', marginRight: '10px' }}

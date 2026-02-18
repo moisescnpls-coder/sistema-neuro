@@ -496,7 +496,7 @@ const PacienteDetalles = () => {
                                             {record.details.results && record.details.results.length > 0 && (
                                                 <div style={{ marginTop: '0.5rem' }}>
                                                     {record.details.results.map(r => (
-                                                        <a key={r.id} href={`http://localhost:5000/${r.filePath}`} target="_blank" rel="noreferrer" style={{ display: 'block', color: 'var(--primary)', textDecoration: 'none', fontSize: '0.9rem', marginBottom: '4px' }}>
+                                                        <a key={r.id} href={`/${r.filePath}`} target="_blank" rel="noreferrer" style={{ display: 'block', color: 'var(--primary)', textDecoration: 'none', fontSize: '0.9rem', marginBottom: '4px' }}>
                                                             <File size={14} style={{ verticalAlign: 'middle', marginRight: '5px' }} />
                                                             Resultado ({new Date(r.uploadDate).toLocaleDateString()}) {r.note ? `- ${r.note}` : ''}
                                                         </a>
