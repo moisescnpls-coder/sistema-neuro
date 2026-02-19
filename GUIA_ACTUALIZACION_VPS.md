@@ -24,8 +24,7 @@ Este es el comando único que limpia cambios locales, descarga la última versi�
 **Copia y pega esto en la terminal del VPS:**
 
 ```bash
-# Comando único para atualizar tudo (requer senha do servidor se não usar chave SSH)
-cd ~/apps/neuro && git reset --hard && git pull && npm install && npm run build && pm2 restart neuro-backend
+cd ~/apps/neuro && git pull && npm install && npm run build && pm2 restart neuro-backend
 ```
 
 ---

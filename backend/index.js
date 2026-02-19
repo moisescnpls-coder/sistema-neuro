@@ -104,6 +104,10 @@ app.use(express.json());
 
 app.use('/uploads', express.static(baseUploadDir));
 
+
+// --- Rota de Health Check (Monitoramento) ---
+app.get('/api/health', (req, res) => res.status(200).send('uptime-ok'));
+
 // --- Middleware de Autenticação ---
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
@@ -159,7 +163,7 @@ app.get('/api/system-status', authenticateToken, (req, res) => {
             uploadsSize += getDirSize(localUploads);
         }
 
-        const packageJson = require('./package.json');
+        const packageJson = require('../package.json');
 
         res.json({
             dbSize,
