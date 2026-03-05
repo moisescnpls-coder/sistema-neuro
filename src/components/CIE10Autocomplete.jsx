@@ -102,15 +102,15 @@ const CIE10Autocomplete = ({ onSelect, initialValue = '', disabled = false }) =>
                     {results.map((item, index) => (
                         <div
                             key={index}
-                            className="px-3 py-2 rounded-lg hover:bg-blue-50 cursor-pointer flex flex-col gap-1 transition-colors group mb-1 last:mb-0"
+                            className="px-4 py-3 rounded-lg hover:bg-blue-50 cursor-pointer flex flex-col gap-1 transition-colors group mb-1 last:mb-0"
                             onClick={(e) => handleSelect(e, item)}
                         >
                             <div className="flex justify-between items-center gap-4">
-                                <span className="text-base font-semibold text-gray-800 leading-tight group-hover:text-blue-700">
+                                <span className="text-lg font-bold text-gray-800 leading-tight group-hover:text-blue-700">
                                     {item.descripción}
                                 </span>
-                                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-bold bg-gray-100 text-gray-600 border border-gray-200 shadow-sm shrink-0">
-                                    <Stethoscope size={14} />
+                                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-base font-bold bg-gray-100 text-gray-600 border border-gray-200 shadow-sm shrink-0">
+                                    <Stethoscope size={16} />
                                     {item.código}
                                 </span>
                             </div>
