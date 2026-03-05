@@ -40,6 +40,18 @@ const Relatorios = () => {
     const API_HOST = isLocal ? `http://${window.location.hostname}:5000` : window.location.origin;
     const departments = ubigeoService.getDepartments();
 
+    let parsedLogoUrl = '';
+    if (settings?.logoUrl) {
+        let lp = settings.logoUrl;
+        const uIdx = lp.indexOf('uploads');
+        if (uIdx !== -1) {
+            lp = '/' + lp.substring(uIdx).replace(/\\/g, '/');
+        } else if (!lp.startsWith('/')) {
+            lp = '/' + lp;
+        }
+        parsedLogoUrl = `${API_HOST}${lp}`;
+    }
+
     if (!isAdmin && !hasPermission('view_reports')) {
         return (
             <div className="flex h-[80vh] items-center justify-center">
@@ -455,9 +467,9 @@ const Relatorios = () => {
                                 <div className="hidden print:block print-header">
                                     <div className="flex justify-between items-start mb-6">
                                         <div className="flex items-center gap-4">
-                                            {settings?.logoUrl && (
+                                            {parsedLogoUrl && (
                                                 <img
-                                                    src={`${API_HOST}/${settings.logoUrl}`}
+                                                    src={parsedLogoUrl}
                                                     alt="Logo"
                                                     className="h-16 w-auto object-contain"
                                                 />

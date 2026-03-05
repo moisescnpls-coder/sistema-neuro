@@ -247,7 +247,16 @@ const Clinico = () => {
             const API_HOST = isLocal ? `http://${window.location.hostname}:5000` : window.location.origin;
             const printWindow = window.open('', '', 'height=800,width=1200');
 
-            const logoUrl = settings.logoUrl ? `${API_HOST}/${settings.logoUrl}` : '';
+            let logoPath = settings.logoUrl || '';
+            if (logoPath) {
+                const uIdx = logoPath.indexOf('uploads');
+                if (uIdx !== -1) {
+                    logoPath = '/' + logoPath.substring(uIdx).replace(/\\/g, '/');
+                } else if (!logoPath.startsWith('/')) {
+                    logoPath = '/' + logoPath;
+                }
+            }
+            const logoUrl = logoPath ? `${API_HOST}${logoPath}` : '';
 
             const content = `
                 <html>
@@ -381,31 +390,21 @@ const Clinico = () => {
                         }
                         
                         /* Watermark */
-                        .content-area::before {
-                            content: '';
+                        .watermark {
                             position: absolute;
-                            top: 0.5cm;
+                            top: 50%;
                             left: 50%;
-                            transform: translateX(-50%);
+                            transform: translate(-50%, -50%);
                             width: 6.5cm;
                             height: 7.5cm;
-                            background-color: #2F5496;
-                            -webkit-mask-image: url('${logoUrl}');
-                            mask-image: url('${logoUrl}');
-                            -webkit-mask-repeat: no-repeat;
-                            mask-repeat: no-repeat;
-                            -webkit-mask-position: center;
-                            mask-position: center;
-                            -webkit-mask-size: contain;
-                            mask-size: contain;
+                            object-fit: contain;
                             opacity: 0.15;
+                            filter: brightness(0) saturate(100%) invert(29%) sepia(34%) saturate(2220%) hue-rotate(190deg) brightness(94%) contrast(87%);
                             z-index: 0;
                             pointer-events: none;
-                            -webkit-print-color-adjust: exact;
-                            print-color-adjust: exact;
                         }
                         
-                        .content-area > * { position: relative; z-index: 1; }
+                        .content-area > *:not(.watermark) { position: relative; z-index: 1; }
                         
                         .content-title {
                             font-family: 'Brush Script MT', cursive;
@@ -484,7 +483,7 @@ const Clinico = () => {
                         body.pre-printed .patient-info { 
                             visibility: hidden; 
                         }
-                        body.pre-printed .content-area::before { 
+                        body.pre-printed .watermark { 
                             display: none; 
                         }
 
@@ -538,6 +537,7 @@ const Clinico = () => {
 
                             <!-- Content: Rp. -->
                             <div class="content-area">
+                                ${logoUrl ? `<img src="${logoUrl}" class="watermark" />` : ''}
                                 <div class="content-title">Indicaciones</div> <!-- User asked for Indicaciones style generally, replacing Rp. title might be desired or keeping Rp but styled. Wait, user provided image with "Indicaciones:" at bottom. For prescription, usually it is Rp. I will keep Rp but style it like requested if apply. actually, user said "Indicaciones - Brush Script..." I'll use "Rp." for meds with that style, or should I change it to "Indicaciones"? In previous turn user said "Replace Rp. with Indicaciones" for exam orders. For Prescriptions it is usually Rp. I will use "Rp." here but styled. Wait, the prompt says "Indicaciones ... igual de recetas". I'll stick to "Rp." for prescriptions (Left side) and "Indicaciones" (Right side) but both styled. actually, let's use "Rp." for meds. -->
                                 <div class="content-title" style="margin-top:0;">Rp.</div>
                                 ${rx.medications && rx.medications.length > 0 ? `
@@ -553,15 +553,6 @@ const Clinico = () => {
                                         `).join('')}
                                     </ul>
                                 ` : ''}
-                                
-                                <!-- Signature inside box -->
-                                <div class="signature-area">
-                                    <div class="signature-box">
-                                        <strong>Firma y Sello</strong><br>
-                                        <small>Dra. Lucrecia Compén Kong</small><br>
-                                        <small>C.M.P. 10837</small>
-                                    </div>
-                                </div>
                             </div>
 
                         </div>
@@ -601,18 +592,10 @@ const Clinico = () => {
 
                             <!-- Content: Indicaciones -->
                             <div class="content-area">
+                                ${logoUrl ? `<img src="${logoUrl}" class="watermark" />` : ''}
                                 <div class="content-title">Indicaciones:</div>
                                 <div class="instructions-content">
                                     ${(rx.instructions || '').trim()}
-                                </div>
-                                
-                                <!-- Signature inside box -->
-                                <div class="signature-area">
-                                    <div class="signature-box">
-                                        <strong>Firma y Sello</strong><br>
-                                        <small>Dra. Lucrecia Compén Kong</small><br>
-                                        <small>C.M.P. 10837</small>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -643,7 +626,16 @@ const Clinico = () => {
             const API_HOST = isLocal ? `http://${window.location.hostname}:5000` : window.location.origin;
             const printWindow = window.open('', '', 'height=800,width=1000');
 
-            const logoUrl = settings.logoUrl ? `${API_HOST}/${settings.logoUrl}` : '';
+            let logoPath = settings.logoUrl || '';
+            if (logoPath) {
+                const uIdx = logoPath.indexOf('uploads');
+                if (uIdx !== -1) {
+                    logoPath = '/' + logoPath.substring(uIdx).replace(/\\/g, '/');
+                } else if (!logoPath.startsWith('/')) {
+                    logoPath = '/' + logoPath;
+                }
+            }
+            const logoUrl = logoPath ? `${API_HOST}${logoPath}` : '';
 
             const content = `
                 <html>
@@ -775,31 +767,21 @@ const Clinico = () => {
                         }
                         
                         /* Watermark */
-                        .content-area::before {
-                            content: '';
+                        .watermark {
                             position: absolute;
-                            top: 0.5cm;
+                            top: 50%;
                             left: 50%;
-                            transform: translateX(-50%);
+                            transform: translate(-50%, -50%);
                             width: 6.5cm;
                             height: 7.5cm;
-                            background-color: #2F5496;
-                            -webkit-mask-image: url('${logoUrl}');
-                            mask-image: url('${logoUrl}');
-                            -webkit-mask-repeat: no-repeat;
-                            mask-repeat: no-repeat;
-                            -webkit-mask-position: center;
-                            mask-position: center;
-                            -webkit-mask-size: contain;
-                            mask-size: contain;
+                            object-fit: contain;
                             opacity: 0.15;
+                            filter: brightness(0) saturate(100%) invert(29%) sepia(34%) saturate(2220%) hue-rotate(190deg) brightness(94%) contrast(87%);
                             z-index: 0;
                             pointer-events: none;
-                            -webkit-print-color-adjust: exact;
-                            print-color-adjust: exact;
                         }
                         
-                        .content-area > * { position: relative; z-index: 1; }
+                        .content-area > *:not(.watermark) { position: relative; z-index: 1; }
                         
                         .content-title {
                             font-family: 'Brush Script MT', cursive;
@@ -842,7 +824,7 @@ const Clinico = () => {
                         body.pre-printed .patient-info { 
                             visibility: hidden; 
                         }
-                        body.pre-printed .content-area::before { 
+                        body.pre-printed .watermark { 
                             display: none; 
                         }
                         
@@ -893,18 +875,11 @@ const Clinico = () => {
                                 </div>
 
                                 <div class="content-area">
+                                    ${logoUrl ? `<img src="${logoUrl}" class="watermark" />` : ''}
                                     <div class="content-title">Indicaciones:</div>
                                     <div class="exam-content">
                                         <strong>${exam.type}</strong>
                                         ${exam.reason ? `<br><br>Motivo: ${exam.reason}` : ''}
-                                    </div>
-                                    
-                                    <div class="signature-area">
-                                        <div class="signature-box">
-                                            <strong>Firma y Sello</strong><br>
-                                            <small>Dra. Lucrecia Compén Kong</small><br>
-                                            <small>C.M.P. 10837</small>
-                                        </div>
                                     </div>
                                 </div>
                             </div>

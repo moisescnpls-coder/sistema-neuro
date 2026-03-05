@@ -11,6 +11,7 @@ import { showAlert } from '../utils/alerts';
 import { formatTime } from '../utils/format';
 import TriageModal from '../components/TriageModal';
 import Modal from '../components/Modal';
+import CIE10Autocomplete from '../components/CIE10Autocomplete';
 
 const Atencion = () => {
     const { id: appointmentId, patientId } = useParams();
@@ -345,7 +346,16 @@ const Atencion = () => {
             const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
             const API_HOST = isLocal ? `http://${window.location.hostname}:5000` : window.location.origin;
             const printWindow = window.open('', '_blank');
-            const logoUrl = settings.logoUrl ? `${API_HOST}/${settings.logoUrl}` : '';
+            let logoPath = settings.logoUrl || '';
+            if (logoPath) {
+                const uIdx = logoPath.indexOf('uploads');
+                if (uIdx !== -1) {
+                    logoPath = '/' + logoPath.substring(uIdx).replace(/\\/g, '/');
+                } else if (!logoPath.startsWith('/')) {
+                    logoPath = '/' + logoPath;
+                }
+            }
+            const logoUrl = logoPath ? `${API_HOST}${logoPath}` : '';
             const pName = patient.fullName || `${patient.firstName} ${patient.lastName}`;
             const age = patient.age || (patient.birthDate ? new Date().getFullYear() - new Date(patient.birthDate).getFullYear() : 'N/A');
 
@@ -417,30 +427,20 @@ const Atencion = () => {
                     }
                     
                     /* Watermark */
-                    .content-area::before {
-                        content: '';
+                    .watermark {
                         position: absolute;
-                        top: 0.5cm;
+                        top: 50%;
                         left: 50%;
-                        transform: translateX(-50%);
+                        transform: translate(-50%, -50%);
                         width: 6.5cm;
                         height: 7.5cm;
-                        background-color: #2F5496;
-                        -webkit-mask-image: url('${logoUrl}');
-                        mask-image: url('${logoUrl}');
-                        -webkit-mask-repeat: no-repeat;
-                        mask-repeat: no-repeat;
-                        -webkit-mask-position: center;
-                        mask-position: center;
-                        -webkit-mask-size: contain;
-                        mask-size: contain;
+                        object-fit: contain;
                         opacity: 0.15;
+                        filter: brightness(0) saturate(100%) invert(29%) sepia(34%) saturate(2220%) hue-rotate(190deg) brightness(94%) contrast(87%);
                         z-index: 0;
                         pointer-events: none;
-                        -webkit-print-color-adjust: exact;
-                        print-color-adjust: exact;
                     }
-                    .content-area > * { position: relative; z-index: 1; }
+                    .content-area > *:not(.watermark) { position: relative; z-index: 1; }
                     
                     .content-title { 
                         font-family: 'Brush Script MT', cursive; 
@@ -466,7 +466,7 @@ const Atencion = () => {
                     body.pre-printed .patient-info { 
                         visibility: hidden; 
                     }
-                    body.pre-printed .content-area::before { 
+                    body.pre-printed .watermark { 
                         display: none; 
                     }
 
@@ -513,17 +513,11 @@ const Atencion = () => {
                             </div>
                             
                             <div class="content-area">
+                                ${logoUrl ? `<img src="${logoUrl}" class="watermark" />` : ''}
                                 <div class="content-title">Indicaciones:</div>
                                 <div class="exam-details">
                                     <div class="exam-type">${ex.type}</div>
-                                    <div>${(ex.reason || '').trim().replace(/\n\s*\n/g, '\n')}</div>
-                                </div>
-                                <div class="signature-area">
-                                    <div class="signature-box">
-                                        <strong>Firma y Sello</strong><br>
-                                        <small>Dra. Lucrecia Compén Kong</small><br>
-                                        <small>C.M.P. 10837</small>
-                                    </div>
+                                    ${ex.reason ? `<div>${ex.reason}</div>` : ''}
                                 </div>
                             </div>
                         </div>
@@ -609,6 +603,7 @@ const Atencion = () => {
         try {
             const settings = await dataService.getSettings();
             const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const isHttps = window.location.protocol === 'https:';
             const API_HOST = isLocal ? `http://${window.location.hostname}:5000` : window.location.origin;
             const printWindow = window.open('', '_blank');
 
@@ -617,9 +612,15 @@ const Atencion = () => {
             // 2. If HTTP (Local Network), use absolute path with port 5000 to ensure access even if frontend is on different port.
 
             let logoPath = settings.logoUrl || '';
-            if (logoPath && !logoPath.startsWith('/')) logoPath = `/${logoPath}`;
-
-            const logoUrl = logoPath ? (isHttps ? logoPath : `${API_HOST}${logoPath}`) : '';
+            if (logoPath) {
+                const uIdx = logoPath.indexOf('uploads');
+                if (uIdx !== -1) {
+                    logoPath = '/' + logoPath.substring(uIdx).replace(/\\/g, '/');
+                } else if (!logoPath.startsWith('/')) {
+                    logoPath = '/' + logoPath;
+                }
+            }
+            const logoUrl = logoPath ? `${API_HOST}${logoPath}` : '';
 
             // 1. Patient Name
             const pName = patient.fullName || `${patient.firstName} ${patient.lastName}`;
@@ -742,31 +743,21 @@ const Atencion = () => {
                         .signature-box { display: inline-block; border-top: 1px solid #000; min-width: 200px; text-align: center; padding-top: 4px; font-size: 9pt; color: #000; }
                         
                         /* Watermark */
-                        .content-area::before {
-                            content: '';
+                        .watermark {
                             position: absolute;
-                            top: 1.5cm;
+                            top: 50%;
                             left: 50%;
-                            transform: translateX(-50%);
+                            transform: translate(-50%, -50%);
                             width: 6.5cm;
                             height: 7.5cm;
-                            background-color: #2F5496;
-                            -webkit-mask-image: url('${logoUrl}');
-                            mask-image: url('${logoUrl}');
-                            -webkit-mask-repeat: no-repeat;
-                            mask-repeat: no-repeat;
-                            -webkit-mask-position: center;
-                            mask-position: center;
-                            -webkit-mask-size: contain;
-                            mask-size: contain;
+                            object-fit: contain;
                             opacity: 0.15;
+                            filter: brightness(0) saturate(100%) invert(29%) sepia(34%) saturate(2220%) hue-rotate(190deg) brightness(94%) contrast(87%);
                             z-index: 0;
                             pointer-events: none;
-                            -webkit-print-color-adjust: exact;
-                            print-color-adjust: exact;
                         }
                         
-                        .content-area > * { position: relative; z-index: 1; }
+                        .content-area > *:not(.watermark) { position: relative; z-index: 1; }
 
 
                         /* Pre-printed mode */
@@ -778,7 +769,7 @@ const Atencion = () => {
                         body.pre-printed .patient-info { 
                             visibility: hidden; 
                         }
-                        body.pre-printed .content-area::before { 
+                        body.pre-printed .watermark { 
                             display: none; 
                         }
 
@@ -818,6 +809,7 @@ const Atencion = () => {
                             </div>
 
                             <div class="content-area">
+                                ${logoUrl ? `<img src="${logoUrl}" class="watermark" />` : ''}
                                 <div class="section-title">Rp.</div>
                                 <ul class="med-list">
                                     ${JSON.parse(rx.medications || '[]').map(m => {
@@ -825,7 +817,6 @@ const Atencion = () => {
                 return `<li class="med-item"><span class="med-name">${m.name} ${m.dose || ''}</span>${details ? `<div class="med-details">${details}</div>` : ''}</li>`;
             }).join('')}
                                 </ul>
-                                <div class="signature-area"><div class="signature-box"><strong>Firma y Sello</strong><br>Dra. Lucrecia Compén Kong<br>C.M.P. 10837</div></div>
                             </div>
                         </div>
                         
@@ -860,6 +851,7 @@ const Atencion = () => {
                             </div>
 
                             <div class="content-area">
+                                ${logoUrl ? `<img src="${logoUrl}" class="watermark" />` : ''}
                                 <div class="section-title">Indicaciones:</div>
                                 <div class="instructions-content">${(rx.instructions || '').trim()}</div>
                             </div>
@@ -1218,7 +1210,10 @@ const Atencion = () => {
                                                     ${validExams.map(ex => `
                                                         <div class="item-row">
                                                             <span class="dot">▶</span>
-                                                            <span>${ex.type}</span>
+                                                            <div style="display: flex; flex-direction: column;">
+                                                                <strong>${ex.type}</strong>
+                                                                ${ex.reason ? `<span style="color: #64748b; font-size: 0.9em; margin-top: 2px;">Indicações: ${ex.reason}</span>` : ''}
+                                                            </div>
                                                         </div>
                                                     `).join('')}
                                                 </div>
@@ -1296,7 +1291,10 @@ const Atencion = () => {
     if (loading || (!appointment && !patient)) return <div className="h-screen flex items-center justify-center text-gray-500 font-medium text-lg">Cargando datos...</div>;
 
     return (
-        <div className="p-3 max-w-[1600px] mx-auto min-h-screen flex flex-col gap-0" onClick={() => setActiveSection(null)}>
+        <div className="p-3 max-w-[1600px] mx-auto min-h-screen flex flex-col gap-0" onClick={() => {
+            if (window.getSelection().toString().length > 0) return;
+            setActiveSection(null);
+        }}>
 
             {/* Header */}
             {/* Header */}
@@ -1393,7 +1391,11 @@ const Atencion = () => {
             <div
                 style={{ marginTop: '20px', marginBottom: '20px' }}
                 className="flex-1 p-8 overflow-hidden flex items-stretch gap-4 transition-all duration-500"
-                onClick={() => setActiveSection(null)}
+                onMouseDown={(e) => {
+                    if (e.target === e.currentTarget) {
+                        setActiveSection(null);
+                    }
+                }}
             >
 
                 {/* 1. PAST: History List (Fixed Width) */}
@@ -1518,12 +1520,30 @@ const Atencion = () => {
                             </div>
                         </div>
                         <div className="relative flex-1">
+                            {appointment && (editingDiagnosis || !diagnosisText) && (
+                                <div className="p-4 bg-white border-b border-gray-100">
+                                    <div className="mb-2">
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-3 ml-2 pt-1" style={{ padding: '4px' }}>Buscador CIE-10</label>
+                                        <CIE10Autocomplete
+                                            onSelect={(val) => {
+                                                const newText = diagnosisText ? `${diagnosisText}\n${val}` : val;
+                                                setDiagnosisText(newText);
+                                                setEditingDiagnosis(true);
+                                            }}
+                                            disabled={!appointment}
+                                        />
+                                    </div>
+                                </div>
+                            )}
                             <textarea
                                 style={{ padding: '5px' }}
                                 className={`flex-1 w-full h-full text-lg font-normal leading-relaxed text-gray-800 focus:outline-none resize-none placeholder-gray-400 ${(!editingDiagnosis && diagnosisText) ? 'bg-amber-50/10' : 'bg-white'}`}
                                 placeholder="Ingrese el diagnóstico..."
                                 value={diagnosisText}
-                                onChange={e => setDiagnosisText(e.target.value)}
+                                onChange={e => {
+                                    setDiagnosisText(e.target.value);
+                                    if (!editingDiagnosis) setEditingDiagnosis(true);
+                                }}
                                 maxLength={1000}
                                 readOnly={!!(diagnosisText && !editingDiagnosis) || !appointment}
                                 disabled={!appointment}
