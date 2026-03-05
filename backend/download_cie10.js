@@ -33,44 +33,47 @@ https.get(CSV_URL, (res) => {
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].trim();
 
-                // Formato de CSV según pudimos ver: código, código2?, nombre, urls...
-                // Para ser mas robustos y no traer dependencias de parseo CSV:
-                if (!line) continue;
+                const parts = [];
+                let current = '';
+                let withinQuotes = false;
 
-                // Un split muy basico asumiendo que el código y el nombre no contienen comas (o la controlamos limitando indices)
-                const parts = line.split(',');
+                for (let j = 0; j < line.length; j++) {
+                    const char = line[j];
+                    if (char === '"') {
+                        if (withinQuotes && j + 1 < line.length && line[j + 1] === '"') {
+                            current += '"';
+                            j++;
+                        } else {
+                            withinQuotes = !withinQuotes;
+                        }
+                    } else if (char === ',' && !withinQuotes) {
+                        parts.push(current);
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                parts.push(current);
+
                 if (parts.length >= 2) {
                     let code = parts[0].trim().toUpperCase();
 
-                    // A veces tiene comillas
-                    if (code.startsWith('"') && code.endsWith('"')) {
-                        code = code.slice(1, -1);
-                    }
-
-                    // Asumiendo que despues de unos campos vacios, tenemos la descripción en la última o penúltima parte antes de URLs
-                    // En el log pudimos ver:
-                    // code,code_0,code_1,code_algo,url,descripción?
-                    // "G00-G99",,,,,,"Trastornos"
-
-                    // La descripción suele ser el texto principal, busquemos el primer texto largo o tomemos el último valor
-                    // Vamos a limpiar las comillas de todas las partes
-                    const cleanParts = parts.map(p => {
-                        let c = p.trim();
-                        if (c.startsWith('"') && c.endsWith('"')) c = c.slice(1, -1);
-                        return c;
-                    });
-
                     let description = '';
+                    let maxLength = 0;
 
-                    // La descripción normalmente está al final, antes del enlace si lo hay, o es el string más largo
-                    // Ignoraremos URLs.
-                    for (let p of cleanParts) {
-                        if (p && p !== code && !p.startsWith('http') && p.length > description.length) {
-                            description = p;
+                    for (let p of parts) {
+                        let cleanP = p.trim();
+
+                        // Ignoramos el código y las urls, buscamos la descripción más larga
+                        if (cleanP && cleanP !== code && !cleanP.startsWith('http')) {
+                            if (cleanP.length > maxLength) {
+                                maxLength = cleanP.length;
+                                description = cleanP;
+                            }
                         }
                     }
 
-                    if (code && description && code !== 'CODE' && code !== 'CODIGO') {
+                    if (code && description && code !== 'CODE' && code !== 'CODIGO' && description.length > 2) {
                         result.push({ código: code, descripción: description });
                         validRecords++;
                     }
