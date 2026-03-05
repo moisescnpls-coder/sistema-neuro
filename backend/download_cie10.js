@@ -74,6 +74,9 @@ https.get(CSV_URL, (res) => {
                     }
 
                     if (code && description && code !== 'CODE' && code !== 'CODIGO' && description.length > 2) {
+                        if (code.length > 3 && !code.includes('-') && !code.includes('.')) {
+                            code = code.substring(0, 3) + '.' + code.substring(3);
+                        }
                         result.push({ código: code, descripción: description });
                         validRecords++;
                     }
