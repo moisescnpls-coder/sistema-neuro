@@ -798,21 +798,52 @@ app.delete('/api/appointments/:id', authenticateToken, (req, res) => {
     });
 
     function deleteAppointment(id, res) {
-        // Cascade delete all related records
-        const deleteTriage = new Promise((resolve) => db.run("DELETE FROM triage WHERE appointmentId = ?", [id], resolve));
-        const deleteExams = new Promise((resolve) => db.run("DELETE FROM exams WHERE appointmentId = ?", [id], resolve));
-        const deletePrescriptions = new Promise((resolve) => db.run("DELETE FROM prescriptions WHERE appointmentId = ?", [id], resolve));
-        const deleteHistory = new Promise((resolve) => db.run("DELETE FROM history WHERE appointmentId = ?", [id], resolve));
+        // Check for related records before deleting
+        const checkTriage = new Promise((resolve) => db.get("SELECT COUNT(*) as count FROM triage WHERE appointmentId = ?", [id], (err, row) => resolve({ label: 'Triaje', count: row ? row.count : 0 })));
+        const checkExams = new Promise((resolve) => db.get("SELECT COUNT(*) as count FROM exams WHERE appointmentId = ?", [id], (err, row) => resolve({ label: 'Exámenes', count: row ? row.count : 0 })));
+        const checkPrescriptions = new Promise((resolve) => db.get("SELECT COUNT(*) as count FROM prescriptions WHERE appointmentId = ?", [id], (err, row) => resolve({ label: 'Recetas', count: row ? row.count : 0 })));
+        const checkHistory = new Promise((resolve) => {
+            db.all("SELECT notes FROM history WHERE appointmentId = ?", [id], (err, rows) => {
+                let hasRealContent = false;
+                if (rows && rows.length > 0) {
+                    for (const row of rows) {
+                        try {
+                            const parsed = JSON.parse(row.notes);
+                            if (Object.values(parsed).some(val => val && val.trim() !== '')) {
+                                hasRealContent = true;
+                                break;
+                            }
+                        } catch (e) {
+                            // If it's not JSON or parsing fails, and it's not empty, consider it content
+                            if (row.notes && row.notes.trim() !== '') {
+                                hasRealContent = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                resolve({ label: 'Historia Clínica', count: hasRealContent ? 1 : 0 });
+            });
+        });
+        const checkAppointment = new Promise((resolve) => db.get("SELECT diagnosis FROM appointments WHERE id = ?", [id], (err, row) => resolve({ label: 'Diagnóstico', count: (row && row.diagnosis && row.diagnosis.trim() !== '') ? 1 : 0 })));
 
-        Promise.all([deleteTriage, deleteExams, deletePrescriptions, deleteHistory]).then(() => {
-            // Then delete the appointment
+        Promise.all([checkTriage, checkExams, checkPrescriptions, checkHistory, checkAppointment]).then((results) => {
+            const found = results.filter(r => r.count > 0).map(r => r.label);
+
+            if (found.length > 0) {
+                return res.status(400).json({
+                    error: `No se puede eliminar: Esta cita tiene información asociada (${found.join(', ')}). Debe eliminar primero ese contenido.`
+                });
+            }
+
+            // If no related records, delete the appointment
             db.run("DELETE FROM appointments WHERE id = ?", [id], function (err) {
                 if (err) return res.status(400).json({ error: err.message });
                 res.json({ success: true, changes: this.changes });
             });
         }).catch(err => {
-            console.error("Error deleting cascade records:", err);
-            res.status(500).json({ error: "Error deleting related records" });
+            console.error("Error checking related records:", err);
+            res.status(500).json({ error: "Error al verificar registros relacionados" });
         });
     }
 });

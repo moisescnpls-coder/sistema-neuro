@@ -1,0 +1,11 @@
+--- Diagnóstico de Base de Datos ---
+
+Últimas 10 citas:
+ID: 75 | Paciente: DE ASSUNCAO COUTINHO MOISES | Fecha: 2026-03-04 | Status: Programado
+   -> Asociados encontrados: Ninguno
+ID: 74 | Paciente: DE ASSUNCAO COUTINHO MOISES | Fecha: 2026-03-03 | Status: Programado
+   -> Asociados encontrados: Historia Clínica, Diagnóstico
+   [!] ESTA CITA NO DEBERÍA PODER BORRARSE
+ID: 73 | Paciente: DE ASSUNCAO COUTINHO MOISES | Fecha: 2026-02-18 | Status: Programado
+   -> Asociados encontrados: Exámenes
+   [!] ESTA CITA NO DEBERÍA PODER BORRARSE

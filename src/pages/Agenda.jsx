@@ -302,7 +302,7 @@ const Agenda = () => {
                 loadData();
                 showAlert('Cita eliminada permanentemente', 'success');
             } catch (error) {
-                showAlert('Error al eliminar la cita', 'error');
+                showAlert(error.message || 'Error al eliminar la cita', 'error');
             }
             setShowDeleteConfirm(false);
             setAppointmentToDelete(null);

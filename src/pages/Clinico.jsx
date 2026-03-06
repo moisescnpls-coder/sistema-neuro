@@ -35,16 +35,17 @@ const Clinico = () => {
     });
     const [editingRxId, setEditingRxId] = useState(null); // ID of prescription being edited
     const [prescriptionDate, setPrescriptionDate] = useState(new Date().toISOString().split('T')[0]); // YYYY-MM-DD format
-    const [newMed, setNewMed] = useState({ name: '', dose: '', freq: '', duration: '' });
+    const [newMed, setNewMed] = useState({ name: '' });
 
     // Exams State
     const [exams, setExams] = useState([]);
-    const [newExam, setNewExam] = useState({ type: '', reason: '' });
+    const [newExam, setNewExam] = useState({ reason: '' });
     const [examDate, setExamDate] = useState(new Date().toISOString().split('T')[0]); // YYYY-MM-DD
     const [uploadExamId, setUploadExamId] = useState(null);
     const [fileToUpload, setFileToUpload] = useState(null);
     const [uploadNote, setUploadNote] = useState('');
     const [usePrePrinted, setUsePrePrinted] = useState(false); // Toggle for letterhead printing
+    const [viewExamModal, setViewExamModal] = useState(null); // For viewing exam details
 
     useEffect(() => {
         if (!isAdmin() && !hasPermission('view_clinical')) {
@@ -107,9 +108,9 @@ const Clinico = () => {
         if (!newMed.name) return;
         setCurrentRx({
             ...currentRx,
-            medications: [...currentRx.medications, newMed]
+            medications: [...currentRx.medications, [...currentRx.medications, newMed].pop()]
         });
-        setNewMed({ name: '', dose: '', freq: '', duration: '' });
+        setNewMed({ name: '' });
     };
 
     const removeMedication = (index) => {
@@ -154,17 +155,17 @@ const Clinico = () => {
 
     // Exam Logic
     const saveExamRequest = async () => {
-        if (!newExam.type) return showAlert('Seleccione un tipo de examen', 'error');
+        if (!newExam.reason || newExam.reason.trim() === '') return showAlert('Ingrese la indicación clínica', 'error');
 
         try {
             await dataService.saveExam({
                 patientId: selectedPatient.id,
-                type: newExam.type,
+                type: 'Exámenes de Laboratorio e Imágenes',
                 reason: newExam.reason,
                 examDate: examDate // Send the selected date
             });
             showAlert('Solicitud de examen creada', 'success');
-            setNewExam({ type: '', reason: '' });
+            setNewExam({ reason: '' });
             loadPatientData(selectedPatient.id);
         } catch (error) {
             showAlert('Error al solicitar examen', 'error');
@@ -370,7 +371,7 @@ const Clinico = () => {
                             padding: 0;
                             margin-bottom: 10px;
                             border: none;
-                            font-size: 9pt;
+                            font-size: 12pt;
                             color: #000;
                             font-weight: bold;
                             font-family: 'Calibri', sans-serif;
@@ -392,7 +393,7 @@ const Clinico = () => {
                         /* Watermark */
                         .watermark {
                             position: absolute;
-                            top: 50%;
+                            top: 32%;
                             left: 50%;
                             transform: translate(-50%, -50%);
                             width: 6.5cm;
@@ -412,7 +413,7 @@ const Clinico = () => {
                             font-size: 16pt;
                             color: #2F5496;
                             text-align: left;
-                            margin-bottom: 5px;
+                            margin-bottom: 2px;
                             padding-left: 0;
                         }
                         
@@ -430,27 +431,27 @@ const Clinico = () => {
                         }
                         .med-item {
                             margin-bottom: 6px;
-                            padding-bottom: 4px;
-                            border-bottom: 1px dotted #ccc;
+                            padding-bottom: 0px;
+                            border-bottom: none;
                         }
                         .med-item:last-child {
                             border-bottom: none;
                         }
                         .med-name {
                             font-weight: bold;
-                            font-size: 10pt;
+                            font-size: 11pt;
                             display: block;
                             margin-bottom: 1px;
                         }
                         .med-details {
-                            font-size: 8pt;
+                            font-size: 10pt;
                             color: #333;
                             margin-left: 6px;
                         }
 
                         /* Instructions */
                         .instructions-content {
-                            font-size: 9pt;
+                            font-size: 12pt;
                             line-height: 1.4;
                             white-space: pre-line;
                             padding: 0 !important;
@@ -495,6 +496,8 @@ const Clinico = () => {
                             body {
                                 margin: 0;
                                 padding: 0;
+                                font-family: 'Calibri', sans-serif;
+                                font-size: 12pt;
                             }
                         }
                     </style>
@@ -525,21 +528,19 @@ const Clinico = () => {
                             </div>
                             <div class="header-line"></div>
 
-                            <!-- Patient Info -->
-                            <div class="patient-info">
-                                <strong><span class="print-label">Paciente:</span></strong> ${selectedPatient.fullName}<br>
-                                <strong><span class="print-label">Fecha:</span></strong> ${(() => {
+                            <!-- Content: Rp. -->
+                            <div class="content-area">
+                                ${logoUrl ? `<img src="${logoUrl}" class="watermark" />` : ''}
+                                <div class="content-title" style="margin-top:0;">Rp.</div>
+                                <!-- Patient Info -->
+                                <div class="patient-info">
+                                    <strong><span class="print-label">Paciente:</span></strong> ${selectedPatient.fullName}<br>
+                                    <strong><span class="print-label">Fecha:</span></strong> ${(() => {
                     const dateStr = rx.prescriptionDate || new Date().toISOString().split('T')[0];
                     const [y, m, d] = dateStr.split('-');
                     return `${d}/${m}/${y}`;
                 })()}
-                            </div>
-
-                            <!-- Content: Rp. -->
-                            <div class="content-area">
-                                ${logoUrl ? `<img src="${logoUrl}" class="watermark" />` : ''}
-                                <div class="content-title">Indicaciones</div> <!-- User asked for Indicaciones style generally, replacing Rp. title might be desired or keeping Rp but styled. Wait, user provided image with "Indicaciones:" at bottom. For prescription, usually it is Rp. I will keep Rp but style it like requested if apply. actually, user said "Indicaciones - Brush Script..." I'll use "Rp." for meds with that style, or should I change it to "Indicaciones"? In previous turn user said "Replace Rp. with Indicaciones" for exam orders. For Prescriptions it is usually Rp. I will use "Rp." here but styled. Wait, the prompt says "Indicaciones ... igual de recetas". I'll stick to "Rp." for prescriptions (Left side) and "Indicaciones" (Right side) but both styled. actually, let's use "Rp." for meds. -->
-                                <div class="content-title" style="margin-top:0;">Rp.</div>
+                                </div>
                                 ${rx.medications && rx.medications.length > 0 ? `
                                     <ul class="med-list">
                                         ${rx.medications.map(m => `
@@ -580,20 +581,19 @@ const Clinico = () => {
                                 </div>
                             </div>
 
-                            <!-- Patient Info (repeated) -->
-                            <div class="patient-info">
-                                <strong><span class="print-label">Paciente:</span></strong> ${selectedPatient.fullName}<br>
-                                <strong><span class="print-label">Fecha:</span></strong> ${(() => {
-                    const dateStr = rx.prescriptionDate || new Date().toISOString().split('T')[0];
-                    const [y, m, d] = dateStr.split('-');
-                    return `${d}/${m}/${y}`;
-                })()}
-                            </div>
-
                             <!-- Content: Indicaciones -->
                             <div class="content-area">
                                 ${logoUrl ? `<img src="${logoUrl}" class="watermark" />` : ''}
                                 <div class="content-title">Indicaciones:</div>
+                                <!-- Patient Info (repeated) -->
+                                <div class="patient-info">
+                                    <strong><span class="print-label">Paciente:</span></strong> ${selectedPatient.fullName}<br>
+                                    <strong><span class="print-label">Fecha:</span></strong> ${(() => {
+                    const dateStr = rx.prescriptionDate || new Date().toISOString().split('T')[0];
+                    const [y, m, d] = dateStr.split('-');
+                    return `${d}/${m}/${y}`;
+                })()}
+                                </div>
                                 <div class="instructions-content">
                                     ${(rx.instructions || '').trim()}
                                 </div>
@@ -745,7 +745,7 @@ const Clinico = () => {
                         .patient-info { 
                             background: transparent;
                             padding: 0;
-                            margin-bottom: 10px;
+                            margin-bottom: 2px;
                             border: none;
                             font-size: 9pt;
                             color: #000;
@@ -769,7 +769,7 @@ const Clinico = () => {
                         /* Watermark */
                         .watermark {
                             position: absolute;
-                            top: 50%;
+                            top: 32%;
                             left: 50%;
                             transform: translate(-50%, -50%);
                             width: 6.5cm;
@@ -789,7 +789,7 @@ const Clinico = () => {
                             font-size: 16pt;
                             color: #2F5496;
                             text-align: left;
-                            margin-bottom: 5px;
+                            margin-bottom: 2px;
                             padding-left: 0;
                         }
                         
@@ -797,7 +797,7 @@ const Clinico = () => {
                             font-size: 9pt;
                             line-height: 1.4;
                             white-space: pre-line;
-                            margin-top: 10px;
+                            margin-top: 2px;
                         }
                         
                         /* Signature */
@@ -865,6 +865,7 @@ const Clinico = () => {
                                 </div>
                                 <div class="header-line"></div>
 
+                                <div class="content-title">Indicaciones:</div>
                                 <div class="patient-info">
                                     <strong><span class="print-label">Paciente:</span></strong> ${selectedPatient.fullName}<br>
                                     <strong><span class="print-label">Fecha:</span></strong> ${(() => {
@@ -876,10 +877,8 @@ const Clinico = () => {
 
                                 <div class="content-area">
                                     ${logoUrl ? `<img src="${logoUrl}" class="watermark" />` : ''}
-                                    <div class="content-title">Indicaciones:</div>
                                     <div class="exam-content">
-                                        <strong>${exam.type}</strong>
-                                        ${exam.reason ? `<br><br>Motivo: ${exam.reason}` : ''}
+                                        ${exam.reason ? `<div>${exam.reason}</div>` : ''}
                                     </div>
                                 </div>
                             </div>
@@ -1039,32 +1038,12 @@ const Clinico = () => {
                                     )}
                                 </h3>
                                 <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem' }}>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
                                         <input
                                             placeholder="Medicamento"
-                                            className="input-field"
+                                            className="input-field flex-1"
                                             value={newMed.name}
                                             onChange={e => setNewMed({ ...newMed, name: e.target.value })}
-                                        />
-                                        <input
-                                            placeholder="Dosis (ej. 500mg)"
-                                            className="input-field"
-                                            value={newMed.dose}
-                                            onChange={e => setNewMed({ ...newMed, dose: e.target.value })}
-                                        />
-                                    </div>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                                        <input
-                                            placeholder="Frecuencia (ej. c/8h)"
-                                            className="input-field"
-                                            value={newMed.freq}
-                                            onChange={e => setNewMed({ ...newMed, freq: e.target.value })}
-                                        />
-                                        <input
-                                            placeholder="Duración (ej. 7 días)"
-                                            className="input-field"
-                                            value={newMed.duration}
-                                            onChange={e => setNewMed({ ...newMed, duration: e.target.value })}
                                         />
                                     </div>
                                     <button onClick={addMedication} className="btn-secondary" style={{ width: '100%' }}>+ Agregar a la lista</button>
@@ -1073,7 +1052,7 @@ const Clinico = () => {
                                 <div style={{ marginBottom: '1.5rem' }}>
                                     {currentRx.medications.map((med, i) => (
                                         <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem', borderBottom: '1px solid var(--border)' }}>
-                                            <span><strong>{med.name}</strong> {med.dose} - {med.freq} ({med.duration})</span>
+                                            <span><strong>{med.name}</strong> {(med.dose || med.freq || med.duration) ? ` ${[med.dose, med.freq, med.duration].filter(Boolean).join(' • ')}` : ''}</span>
                                             <button onClick={() => removeMedication(i)} style={{ color: 'var(--danger)' }}><Trash2 size={16} /></button>
                                         </div>
                                     ))}
@@ -1173,14 +1152,6 @@ const Clinico = () => {
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
                             <div className="card">
                                 <h3 style={{ marginBottom: '1.5rem' }}>Solicitar Examen</h3>
-                                <input
-                                    type="text"
-                                    className="input-field"
-                                    placeholder="Tipo de examen (ej. Resonancia Magnética, Electroencefalograma...)"
-                                    style={{ marginBottom: '1rem' }}
-                                    value={newExam.type}
-                                    onChange={e => setNewExam({ ...newExam, type: e.target.value })}
-                                />
                                 <div style={{ marginBottom: '1rem' }}>
                                     <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.9rem' }}>
                                         Fecha de la Orden
@@ -1223,8 +1194,26 @@ const Clinico = () => {
                                         <div key={ex.id} style={{ marginBottom: '1rem', padding: '1rem', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)' }}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginRight: '8px' }}>
-                                                        <strong style={{ fontSize: '0.9rem' }}>{ex.type}</strong>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginRight: '8px', maxWidth: '100%', overflow: 'hidden' }}>
+                                                        <strong style={{ fontSize: '0.9rem' }} className="truncate">
+                                                            {ex.reason ? (ex.reason.length > 25 ? ex.reason.substring(0, 25) + '...' : ex.reason) : 'Orden de Exámenes'}
+                                                        </strong>
+                                                        {ex.reason && (
+                                                            <div style={{
+                                                                fontSize: '0.85rem',
+                                                                color: 'var(--text-muted)',
+                                                                fontStyle: 'italic',
+                                                                marginBottom: '4px',
+                                                                wordBreak: 'break-word',
+                                                                whiteSpace: 'pre-wrap',
+                                                                display: '-webkit-box',
+                                                                WebkitLineClamp: '4',
+                                                                WebkitBoxOrient: 'vertical',
+                                                                overflow: 'hidden'
+                                                            }}>
+                                                                {ex.reason}
+                                                            </div>
+                                                        )}
                                                         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                                                             Reg: {(() => {
                                                                 const [y, m, d] = ex.date.split('-');
@@ -1281,7 +1270,10 @@ const Clinico = () => {
                                                     )}
                                                 </div>
                                             </div>
-                                            <p style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}>{ex.date} - Dr. {ex.doctorName}</p>
+                                            <p style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}>{(() => {
+                                                const [y, m, d] = ex.date.split('-');
+                                                return `${d}/${m}/${y}`;
+                                            })()}</p>
 
                                             {/* Results Section */}
                                             {ex.results && ex.results.length > 0 && (
@@ -1384,16 +1376,46 @@ const Clinico = () => {
             )
             }
 
+            {/* View Exam Modal */}
+            <Modal isOpen={!!viewExamModal} onClose={() => setViewExamModal(null)} title="Detalles del Examen">
+                {viewExamModal && (
+                    <div style={{ padding: '1.5rem' }}>
+                        <div style={{ marginBottom: '1.5rem' }}>
+                            <h4 style={{ fontWeight: 'bold', color: 'var(--primary)', fontSize: '0.85rem', textTransform: 'uppercase', marginBottom: '10px' }}>Indicación Clínica / Detalles</h4>
+                            <div
+                                style={{
+                                    padding: '1rem',
+                                    backgroundColor: 'var(--bg-secondary)',
+                                    borderRadius: 'var(--radius-md)',
+                                    border: '1px solid var(--border)',
+                                    fontSize: '1.05rem',
+                                    lineHeight: '1.6',
+                                    color: 'var(--text)',
+                                    whiteSpace: 'pre-wrap',
+                                    maxHeight: '400px',
+                                    overflowY: 'auto'
+                                }}
+                            >
+                                {viewExamModal.reason || 'Sin detalles.'}
+                            </div>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                            <div><strong>Registro:</strong> {(() => {
+                                const [y, m, d] = viewExamModal.date.split('-');
+                                return `${d}/${m}/${y}`;
+                            })()}</div>
+                            <div><strong>Fecha Orden:</strong> {viewExamModal.examDate ? viewExamModal.examDate.split('-').reverse().join('/') : '-'}</div>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+                            <button onClick={() => setViewExamModal(null)} className="btn-secondary">Cerrar</button>
+                        </div>
+                    </div>
+                )}
+            </Modal>
+
             {/* Edit Exam Modal */}
             <Modal isOpen={!!editExam} onClose={() => setEditExam(null)} title="Editar Solicitud de Examen">
                 <div style={{ padding: '1rem' }}>
-                    <input
-                        className="input-field"
-                        placeholder="Tipo de examen (ej. Resonancia Magnética...)"
-                        style={{ marginBottom: '1rem' }}
-                        value={editExam?.type || ''}
-                        onChange={e => setEditExam({ ...editExam, type: e.target.value })}
-                    />
 
                     <div style={{ marginBottom: '1rem' }}>
                         <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Fecha de la Orden</label>
@@ -1461,7 +1483,6 @@ const Clinico = () => {
                             onClick={async () => {
                                 try {
                                     await dataService.updateExam(editExam.id, {
-                                        type: editExam.type,
                                         reason: editExam.reason,
                                         examDate: editExam.examDate, // Include examDate in update
                                         status: editExam.status

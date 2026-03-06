@@ -38,17 +38,18 @@ const Atencion = () => {
     const [activeSection, setActiveSection] = useState(null);
 
     // Forms
-    const [historyText, setHistoryText] = useState('');
+    const [historyData, setHistoryData] = useState({ enfermedadActual: '', antecedentes: '', examenFisico: '', comentario: '' });
     const [historyId, setHistoryId] = useState(null); // Track existing history ID
     const [diagnosisText, setDiagnosisText] = useState('');
     const [editingDiagnosis, setEditingDiagnosis] = useState(false);
     const [rxData, setRxData] = useState({ medications: [], instructions: '', date: new Date().toISOString().split('T')[0] });
     const [editingRxId, setEditingRxId] = useState(null); // Track if editing existing prescription
-    const [newMed, setNewMed] = useState({ name: '', dose: '', freq: '', duration: '' });
+    const [newMed, setNewMed] = useState({ name: '' });
     const [examData, setExamData] = useState({ type: '', reason: '', date: new Date().toISOString().split('T')[0] });
 
     // Exam Management State
     const [editExam, setEditExam] = useState(null);
+    const [viewExamModal, setViewExamModal] = useState(null);
     const [uploadExamId, setUploadExamId] = useState(null);
     const [fileToUpload, setFileToUpload] = useState(null);
     const [uploadNote, setUploadNote] = useState('');
@@ -134,14 +135,29 @@ const Atencion = () => {
                 const currentHistory = data.history.find(h => h.appointmentId == appointmentId);
 
                 if (currentHistory) {
-                    setHistoryText(currentHistory.notes || '');
+                    try {
+                        const parsed = JSON.parse(currentHistory.notes);
+                        setHistoryData({
+                            enfermedadActual: parsed.enfermedadActual || '',
+                            antecedentes: parsed.antecedentes || '',
+                            examenFisico: parsed.examenFisico || '',
+                            comentario: parsed.comentario || ''
+                        });
+                    } catch (e) {
+                        setHistoryData({
+                            enfermedadActual: '',
+                            antecedentes: '',
+                            examenFisico: '',
+                            comentario: currentHistory.notes || ''
+                        });
+                    }
                     setHistoryId(currentHistory.id);
                 } else {
-                    setHistoryText('');
+                    setHistoryData({ enfermedadActual: '', antecedentes: '', examenFisico: '', comentario: '' });
                     setHistoryId(null);
                 }
             } else {
-                setHistoryText('');
+                setHistoryData({ enfermedadActual: '', antecedentes: '', examenFisico: '', comentario: '' });
                 setHistoryId(null);
             }
             setDiagnosisText(data.appointment.diagnosis || '');
@@ -151,12 +167,14 @@ const Atencion = () => {
 
     // --- Actions ---
     const handleSaveHistory = async () => {
-        if (!historyText.trim()) return;
+        const hasData = Object.values(historyData).some(val => val.trim() !== '');
+        if (!hasData && !historyId) return; // Prevent creating empty history, allow clearing existing ones
+        const notesJson = JSON.stringify(historyData);
         try {
             if (historyId) {
                 // Update existing
                 await dataService.updateHistory(historyId, {
-                    notes: historyText,
+                    notes: notesJson,
                     date: new Date().toISOString().split('T')[0],
                     type: 'Evolución'
                 });
@@ -166,7 +184,7 @@ const Atencion = () => {
                 // Create new
                 const res = await dataService.addHistory({
                     patientId: patient.id, date: new Date().toISOString().split('T')[0],
-                    type: 'Evolución', notes: historyText, appointmentId: appointment.id
+                    type: 'Evolución', notes: notesJson, appointmentId: appointment.id
                 });
                 if (res.id) setHistoryId(res.id);
                 showAlert('Evolución guardada', 'success');
@@ -187,7 +205,7 @@ const Atencion = () => {
     const handleAddMedication = () => {
         if (!newMed.name) return;
         setRxData(prev => ({ ...prev, medications: [...prev.medications, { ...newMed }] }));
-        setNewMed({ name: '', dose: '', freq: '', duration: '' });
+        setNewMed({ name: '' });
     };
 
     const handleSavePrescription = async () => {
@@ -272,13 +290,13 @@ const Atencion = () => {
     };
 
     const handleSaveExam = async () => {
-        if (!examData.type) return showAlert('Falta tipo', 'warning');
+        if (!examData.reason || examData.reason.trim() === '') return showAlert('Falta indicación clínica', 'warning');
         try {
             await dataService.addExam({
                 patientId: patient.id,
-                type: examData.type,
+                type: 'Exámenes de Laboratorio e Imágenes',
                 reason: examData.reason,
-                doctorName: examData.doctorName,
+                doctorName: '',
                 appointmentId: appointment.id,
                 examDate: examData.date || new Date().toISOString().split('T')[0]
             });
@@ -410,7 +428,7 @@ const Atencion = () => {
                     .office-label { font-weight: bold; }
                     
                     /* Patient Info */
-                    .patient-info { background: transparent; padding: 0; margin-bottom: 5px; border: none; font-size: 9pt; color: #000; font-weight: bold; font-family: 'Calibri', sans-serif; }
+                    .patient-info { background: transparent; padding: 0; margin-bottom: 2px; border: none; font-size: 9pt; color: #000; font-weight: bold; font-family: 'Calibri', sans-serif; }
                     
                     /* Content Area */
                     .content-area { 
@@ -429,7 +447,7 @@ const Atencion = () => {
                     /* Watermark */
                     .watermark {
                         position: absolute;
-                        top: 50%;
+                        top: 32%;
                         left: 50%;
                         transform: translate(-50%, -50%);
                         width: 6.5cm;
@@ -448,11 +466,11 @@ const Atencion = () => {
                         font-size: 16pt; 
                         color: #2F5496; 
                         text-align: left; 
-                        margin-bottom: 2px; 
+                        margin-bottom: 0px; 
                         padding-left: 0; 
                     }
                     
-                    .exam-details { font-size: 10pt; line-height: 1.4; white-space: pre-wrap; text-align: left; padding-top: 0; }
+                    .exam-details { font-size: 10pt; line-height: 1.4; white-space: pre-wrap; text-align: left; padding-top: 0; margin-top: 0px; }
                     .exam-type { font-weight: bold; font-size: 11pt; margin-bottom: 2px; }
                     
                     .signature-area { margin-top: 40px; text-align: right; page-break-inside: avoid; }
@@ -507,6 +525,7 @@ const Atencion = () => {
                             </div>
                             <div class="header-line"></div>
 
+                            <div class="content-title">Indicaciones:</div>
                             <div class="patient-info">
                                 <strong><span class="print-label">Paciente:</span></strong> ${pName} (${age} años)<br>
                                 <strong><span class="print-label">Fecha:</span></strong> ${exDate}
@@ -514,9 +533,7 @@ const Atencion = () => {
                             
                             <div class="content-area">
                                 ${logoUrl ? `<img src="${logoUrl}" class="watermark" />` : ''}
-                                <div class="content-title">Indicaciones:</div>
                                 <div class="exam-details">
-                                    <div class="exam-type">${ex.type}</div>
                                     ${ex.reason ? `<div>${ex.reason}</div>` : ''}
                                 </div>
                             </div>
@@ -669,6 +686,30 @@ const Atencion = () => {
                         }
                         
                         /* Medico Neurologa / CMP - Calibri - Size 11 */
+                        .header {
+                            text-align: center;
+                            /* border-bottom removed */
+                            margin-bottom: 4px; /* Decreased margin to save space */
+                        }
+                        
+                        .header-line {
+                            height: 4px;
+                            border-top: 2px solid #2F5496;
+                            border-bottom: 1px solid #2F5496;
+                            margin-bottom: 10px;
+                        }
+
+                        /* Doctor Name - Brush Script MT Bold - Size 26 */
+                        .doctor-name {
+                            font-family: 'Brush Script MT', 'Brush Script Std', cursive;
+                            font-size: 26pt;
+                            color: #2F5496;
+                            font-weight: bold;
+                            margin-bottom: 2px; /* Decreased */
+                            line-height: 1.2;
+                        }
+
+                        /* Specialty Info - Calibri Bold - Size 11 */
                         .specialty-info {
                             font-family: 'Calibri', 'Arial', sans-serif;
                             font-size: 11pt;
@@ -714,7 +755,7 @@ const Atencion = () => {
                         
                         .info-label { font-weight: bold; }
 
-                        .content-area { flex: 1; position: relative; padding-top: 10px; }
+                        .content-area { flex: 1; position: relative; padding-top: 0px; }
                         
                         /* Rp / Indicaciones - Brush Script MT Bold - Size 14 */
                         .section-title {
@@ -722,18 +763,18 @@ const Atencion = () => {
                             font-size: 16pt; /* Increased to 16 to be more visible like 14 bold */
                             font-weight: bold;
                             color: #2F5496;
-                            margin-bottom: 10px;
+                            margin-bottom: 5px;
                         }
 
                         .med-list { list-style: none; padding: 0; color: #000; }
-                        .med-item { margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px dotted #ccc; }
+                        .med-item { margin-bottom: 8px; padding-bottom: 0px; border-bottom: none; }
                         .med-item:last-child { border-bottom: none; }
                         .med-name { font-weight: bold; font-size: 10pt; display: block; margin-bottom: 2px; }
                         .med-details { font-size: 9pt; color: #333; margin-left: 6px; }
                         
                         .instructions-content { 
                             font-family: 'Calibri', 'Arial', sans-serif;
-                            font-size: 10pt; 
+                            font-size: 12pt; 
                             color: #000;
                             line-height: 1.4; 
                             white-space: pre-line; 
@@ -745,7 +786,7 @@ const Atencion = () => {
                         /* Watermark */
                         .watermark {
                             position: absolute;
-                            top: 50%;
+                            top: 32%;
                             left: 50%;
                             transform: translate(-50%, -50%);
                             width: 6.5cm;
@@ -773,7 +814,7 @@ const Atencion = () => {
                             display: none; 
                         }
 
-                        @media print { @page { margin: 0; size: 21.59cm 22.5cm; } body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; } }
+                        @media print { @page { margin: 0; size: 21.59cm 22.5cm; } body { font-family: 'Calibri', sans-serif; font-size: 12pt; margin: 0; padding: 0; -webkit-print-color-adjust: exact; } }
                     </style>
                 </head>
                 <body class="${usePrePrinted ? 'pre-printed' : ''}">
@@ -801,20 +842,19 @@ const Atencion = () => {
                                 <div class="footer-info-bottom-border"></div>
                             </div>
 
-                            <div class="patient-info" style="margin-bottom: 2px; font-size: 10pt; color: #000;">
-                                <strong><span class="print-label">Paciente:</span></strong> ${pName}
-                            </div>
-                            <div class="patient-info" style="margin-bottom: 10px; font-size: 10pt; color: #000;">
-                                <strong><span class="print-label">Fecha:</span></strong> ${formattedDate}
-                            </div>
-
                             <div class="content-area">
                                 ${logoUrl ? `<img src="${logoUrl}" class="watermark" />` : ''}
                                 <div class="section-title">Rp.</div>
+                                <div class="patient-info" style="margin-bottom: 2px; font-size: 12pt; color: #000; font-family: 'Calibri', sans-serif;">
+                                    <strong><span class="print-label">Paciente:</span></strong> ${pName}
+                                </div>
+                                <div class="patient-info" style="margin-bottom: 15px; font-size: 12pt; color: #000; font-family: 'Calibri', sans-serif;">
+                                    <strong><span class="print-label">Fecha:</span></strong> ${formattedDate}
+                                </div>
                                 <ul class="med-list">
                                     ${JSON.parse(rx.medications || '[]').map(m => {
                 const details = [m.freq, m.duration].filter(Boolean).join(' • ');
-                return `<li class="med-item"><span class="med-name">${m.name} ${m.dose || ''}</span>${details ? `<div class="med-details">${details}</div>` : ''}</li>`;
+                return `<li class="med-item" style="font-size: 12pt;"><span class="med-name" style="font-size: 12pt;">${m.name} ${m.dose || ''}</span>${details ? `<div class="med-details" style="font-size: 11pt;">${details}</div>` : ''}</li>`;
             }).join('')}
                                 </ul>
                             </div>
@@ -843,17 +883,16 @@ const Atencion = () => {
                                 <div class="footer-info-bottom-border"></div>
                             </div>
 
-                            <div class="patient-info" style="margin-bottom: 2px; font-size: 10pt; color: #000;">
-                                <strong><span class="print-label">Paciente:</span></strong> ${pName}
-                            </div>
-                            <div class="patient-info" style="margin-bottom: 10px; font-size: 10pt; color: #000;">
-                                <strong><span class="print-label">Fecha:</span></strong> ${formattedDate}
-                            </div>
-
                             <div class="content-area">
                                 ${logoUrl ? `<img src="${logoUrl}" class="watermark" />` : ''}
                                 <div class="section-title">Indicaciones:</div>
-                                <div class="instructions-content">${(rx.instructions || '').trim()}</div>
+                                <div class="patient-info" style="margin-bottom: 2px; font-size: 12pt; color: #000; font-family: 'Calibri', sans-serif;">
+                                    <strong><span class="print-label">Paciente:</span></strong> ${pName}
+                                </div>
+                                <div class="patient-info" style="margin-bottom: 15px; font-size: 12pt; color: #000; font-family: 'Calibri', sans-serif;">
+                                    <strong><span class="print-label">Fecha:</span></strong> ${formattedDate}
+                                </div>
+                                <div class="instructions-content" style="font-size: 12pt;">${(rx.instructions || '').trim()}</div>
                             </div>
                         </div>
                     </div>
@@ -1130,7 +1169,13 @@ const Atencion = () => {
                 }
 
                 const currentHistory = h.history?.find(note => String(note.appointmentId) === String(appt.id));
-                const historyText = currentHistory?.notes || '';
+                let parsedHistory = null;
+                let historyText = currentHistory?.notes || '';
+                if (historyText && historyText.startsWith('{')) {
+                    try {
+                        parsedHistory = JSON.parse(historyText);
+                    } catch (e) { }
+                }
                 const diagnosisText = appt.diagnosis || '';
 
                 return `
@@ -1183,9 +1228,16 @@ const Atencion = () => {
                                 <div class="content-sections">
                                     ${(printIncludeHistory && historyText && historyText.trim() && historyText !== 'undefined') ? `
                                         <div class="print-section">
-                                            <div class="section-head"><h3 class="section-label">Evolución Clínica / Anamnesis</h3></div>
+                                            <div class="section-head"><h3 class="section-label">Historia Clínica</h3></div>
                                             <div class="section-body">
-                                                <div class="content-txt">${historyText}</div>
+                                                <div class="content-txt">
+                                                ${parsedHistory ? `
+                                                    ${parsedHistory.enfermedadActual ? `<strong>Enfermedad Actual:</strong><br/>${parsedHistory.enfermedadActual.replace(/\\n/g, '<br/>')}<br/><br/>` : ''}
+                                                    ${parsedHistory.antecedentes ? `<strong>Antecedentes:</strong><br/>${parsedHistory.antecedentes.replace(/\\n/g, '<br/>')}<br/><br/>` : ''}
+                                                    ${parsedHistory.examenFisico ? `<strong>Examen Físico:</strong><br/>${parsedHistory.examenFisico.replace(/\\n/g, '<br/>')}<br/><br/>` : ''}
+                                                    ${parsedHistory.comentario ? `<strong>Comentario:</strong><br/>${parsedHistory.comentario.replace(/\\n/g, '<br/>')}` : ''}
+                                                ` : historyText.replace(/\\n/g, '<br/>')}
+                                                </div>
                                             </div>
                                         </div>
                                     ` : ''}
@@ -1461,11 +1513,11 @@ const Atencion = () => {
 
                 {/* 2. PRESENT: Evolution (Dynamic Width) */}
                 <div
-                    className={`flex flex-col gap-4 overflow-hidden transition-all duration-500 ease-in-out ${!activeSection ? 'flex-1' : ((activeSection === 'rx' || activeSection === 'exam') ? 'flex-[4]' : 'flex-[6]')}`}
+                    className={`flex flex-col gap-4 overflow-hidden transition-all duration-500 ease-in-out ${!activeSection ? 'flex-[1.4]' : ((activeSection === 'rx' || activeSection === 'exam') ? 'flex-[4]' : 'flex-[6]')}`}
                 >
 
                     {/* Evolution Note */}
-                    <div onClick={(e) => { e.stopPropagation(); setActiveSection('evolution'); }} className={`transition-all duration-300 bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col overflow-hidden ${activeSection === 'evolution' ? 'flex-[3]' : (activeSection === 'diagnosis' ? 'flex-1' : 'flex-[1.2]')}`}>
+                    <div onClick={(e) => { e.stopPropagation(); setActiveSection('evolution'); }} className={`transition-all duration-300 bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col overflow-hidden ${activeSection === 'evolution' ? 'flex-[4]' : (activeSection === 'diagnosis' ? 'flex-[0.8]' : 'flex-[2.5]')}`}>
                         <div style={{ padding: '5px' }} className="bg-gray-50 border-b border-gray-100 flex justify-between items-center">
                             <span className="flex items-center gap-2 text-sm font-bold text-gray-700 uppercase tracking-wide"><FileText size={18} className="text-blue-600" /> Historia Clínica</span>
                             <div className="flex gap-2">
@@ -1483,25 +1535,68 @@ const Atencion = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className="relative flex-1">
-                            <textarea
-                                style={{ padding: '5px' }}
-                                className={`flex-1 w-full h-full text-lg leading-relaxed text-gray-800 focus:outline-none resize-none placeholder-gray-400 font-normal ${(!editingHistory && historyId) ? 'bg-gray-50' : ''}`}
-                                placeholder="Escriba aquí la evolución del paciente..."
-                                value={historyText}
-                                onChange={e => setHistoryText(e.target.value)}
-                                maxLength={2000}
-                                readOnly={!!(historyId && !editingHistory) || !appointment}
-                                disabled={!appointment}
-                            />
-                            <span style={{ position: 'absolute', bottom: '8px', right: '8px', fontSize: '0.7rem', color: (historyText?.length || 0) > 1800 ? 'var(--danger)' : 'var(--text-muted)' }}>
-                                {historyText?.length || 0}/2000
-                            </span>
+                        <div className="relative flex-1 overflow-y-auto p-4 custom-scrollbar">
+                            <div className="pb-4" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                {/* Anamnesis Group */}
+                                <div style={{ borderLeft: '3px solid #3b82f6', paddingLeft: '12px', paddingRight: '12px', marginBottom: '5px', paddingBottom: '5px', marginTop: '5px' }}>
+                                    <h4 style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#1d4ed8', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>Anamnesis</h4>
+
+                                    <div style={{ marginBottom: '10px' }}>
+                                        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#6b7280', textTransform: 'uppercase', paddingBottom: '4px' }}>Enfermedad Actual</label>
+                                        <textarea
+                                            style={{ minHeight: '90px', padding: '8px', fontSize: '1.1rem', lineHeight: '1.4', width: '100%', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none' }}
+                                            className={`font-normal ${(!editingHistory && historyId) ? 'bg-gray-50 border-transparent' : 'focus:ring-2 focus:ring-blue-100'}`}
+                                            placeholder="Descripción de la enfermedad actual..."
+                                            value={historyData.enfermedadActual}
+                                            onChange={e => setHistoryData({ ...historyData, enfermedadActual: e.target.value })}
+                                            readOnly={!!(historyId && !editingHistory) || !appointment}
+                                            disabled={!appointment}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#6b7280', textTransform: 'uppercase', paddingBottom: '4px' }}>Antecedentes</label>
+                                        <textarea
+                                            style={{ minHeight: '70px', padding: '8px', fontSize: '1.1rem', lineHeight: '1.4', width: '100%', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none' }}
+                                            className={`font-normal ${(!editingHistory && historyId) ? 'bg-gray-50 border-transparent' : 'focus:ring-2 focus:ring-blue-100'}`}
+                                            placeholder="Antecedentes médicos, familiares..."
+                                            value={historyData.antecedentes}
+                                            onChange={e => setHistoryData({ ...historyData, antecedentes: e.target.value })}
+                                            readOnly={!!(historyId && !editingHistory) || !appointment}
+                                            disabled={!appointment}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div style={{ borderLeft: '3px solid #3b82f6', paddingLeft: '12px', paddingRight: '12px', marginBottom: '5px', paddingBottom: '10px', marginTop: '5px' }}>
+                                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 'bold', color: '#1d4ed8', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>Examen Físico</label>
+                                    <textarea
+                                        style={{ minHeight: '70px', padding: '8px', fontSize: '1.1rem', lineHeight: '1.4', width: '100%', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none' }}
+                                        className={`font-normal ${(!editingHistory && historyId) ? 'bg-gray-50 border-transparent' : 'focus:ring-2 focus:ring-blue-100'}`}
+                                        placeholder="Hallazgos del examen físico..."
+                                        value={historyData.examenFisico}
+                                        onChange={e => setHistoryData({ ...historyData, examenFisico: e.target.value })}
+                                        readOnly={!!(historyId && !editingHistory) || !appointment}
+                                        disabled={!appointment}
+                                    />
+                                </div>
+                                <div style={{ borderLeft: '3px solid #3b82f6', paddingLeft: '12px', paddingRight: '12px', marginBottom: '5px', paddingBottom: '10px', marginTop: '5px' }}>
+                                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 'bold', color: '#1d4ed8', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>Comentario</label>
+                                    <textarea
+                                        style={{ minHeight: '70px', padding: '8px', fontSize: '1.1rem', lineHeight: '1.4', width: '100%', border: '1px solid #e5e7eb', borderRadius: '8px', outline: 'none' }}
+                                        className={`font-normal ${(!editingHistory && historyId) ? 'bg-gray-50 border-transparent' : 'focus:ring-2 focus:ring-blue-100'}`}
+                                        placeholder="Comentarios adicionales / Evoluciones previas..."
+                                        value={historyData.comentario}
+                                        onChange={e => setHistoryData({ ...historyData, comentario: e.target.value })}
+                                        readOnly={!!(historyId && !editingHistory) || !appointment}
+                                        disabled={!appointment}
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     {/* Diagnosis (Bigger) */}
-                    <div onClick={(e) => { e.stopPropagation(); setActiveSection('diagnosis'); }} className={`transition-all duration-300 bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col overflow-hidden ${activeSection === 'diagnosis' ? 'flex-[3]' : 'flex-1'}`}>
+                    <div onClick={(e) => { e.stopPropagation(); setActiveSection('diagnosis'); }} className={`transition-all duration-300 bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col overflow-hidden ${activeSection === 'diagnosis' ? 'flex-[4]' : 'flex-1'}`}>
                         <div style={{ padding: '5px' }} className="bg-amber-50 border-b border-amber-100 flex justify-between items-center">
                             <span className="flex items-center gap-2 text-sm font-bold text-amber-800 uppercase tracking-wide"><AlertCircle size={18} /> Diagnóstico Principal</span>
                             <div className="flex gap-2">
@@ -1557,7 +1652,7 @@ const Atencion = () => {
 
                 {/* 3. ACTIONS: Prescriptions & Exams (Dynamic Width) */}
                 <div
-                    className={`flex flex-col gap-4 overflow-hidden transition-all duration-500 ease-in-out ${!activeSection ? 'flex-[1.5]' : ((activeSection === 'rx' || activeSection === 'exam') ? 'flex-[7]' : 'flex-[3]')}`}
+                    className={`flex flex-col gap-4 overflow-hidden transition-all duration-500 ease-in-out ${!activeSection ? 'flex-[1.2]' : ((activeSection === 'rx' || activeSection === 'exam') ? 'flex-[7]' : 'flex-[2]')}`}
                 >
                     {/* Print Toggle - Moved to Left and Styled as Button */}
                     <div className="flex justify-start px-2">
@@ -1580,7 +1675,7 @@ const Atencion = () => {
                     </div>
 
                     {/* Prescriptions */}
-                    <div onClick={(e) => { e.stopPropagation(); setActiveSection('rx'); }} className={`transition-all duration-300 bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col overflow-hidden min-h-0 ${activeSection === 'rx' ? 'flex-[3]' : (activeSection === 'exam' ? 'flex-1' : 'flex-1')}`}>
+                    <div onClick={(e) => { e.stopPropagation(); setActiveSection('rx'); }} className={`transition-all duration-300 bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col overflow-hidden min-h-0 ${activeSection === 'rx' ? 'flex-[4]' : 'flex-none max-h-[40vh]'}`}>
                         <div style={{ padding: '5px' }} className="bg-gray-50 border-b border-gray-100 text-sm font-bold text-emerald-700 uppercase flex items-center gap-2 tracking-wide">
                             <Pill size={18} /> Recetas
                         </div>
@@ -1588,12 +1683,9 @@ const Atencion = () => {
                         {/* New Rx Input */}
                         {appointment && (
                             <div style={{ padding: '8px' }} className="border-b border-gray-100 bg-gray-50/30 space-y-4">
-                                <input className="input-field w-full text-base" style={{ marginBottom: '10px' }} placeholder="Medicamento..." value={newMed.name} onChange={e => setNewMed({ ...newMed, name: e.target.value })} />
-                                <div className="flex gap-2">
-                                    <input className="input-field w-1/3 text-sm py-2" placeholder="Dosis (ej: 500mg)" value={newMed.dose} onChange={e => setNewMed({ ...newMed, dose: e.target.value })} />
-                                    <input className="input-field w-1/3 text-sm py-2" placeholder="Frecuencia (ej: 8h)" value={newMed.freq} onChange={e => setNewMed({ ...newMed, freq: e.target.value })} />
-                                    <input className="input-field w-1/3 text-sm py-2" placeholder="Duración (ej: 5 días)" value={newMed.duration} onChange={e => setNewMed({ ...newMed, duration: e.target.value })} />
-                                    <button onClick={handleAddMedication} style={{ backgroundColor: '#059669', color: 'white', padding: '10px' }} className="rounded-lg shadow-sm mb-[2px] transition-all hover:opacity-90 flex-shrink-0"><Plus size={20} /></button>
+                                <div className="flex gap-2 items-center">
+                                    <input className="input-field w-full text-base" placeholder="Medicamento..." value={newMed.name} onChange={e => setNewMed({ ...newMed, name: e.target.value })} />
+                                    <button onClick={handleAddMedication} style={{ backgroundColor: '#059669', color: 'white', padding: '10px' }} className="rounded-lg shadow-sm transition-all hover:opacity-90 flex-shrink-0"><Plus size={20} /></button>
                                 </div>
                             </div>
                         )}
@@ -1606,7 +1698,7 @@ const Atencion = () => {
                                 <div key={i} style={{ padding: '5px', marginBottom: '10px' }} className="flex justify-between items-center p-4 bg-white border border-gray-100 rounded-lg shadow-sm group">
                                     <div className="flex flex-col">
                                         <span className="font-bold text-gray-800 text-base">{m.name}</span>
-                                        <span className="text-sm text-gray-500">{m.dose} • {m.freq} • {m.duration}</span>
+                                        {(m.dose || m.freq || m.duration) ? <span className="text-sm text-gray-500">{[m.dose, m.freq, m.duration].filter(Boolean).join(' • ')}</span> : null}
                                     </div>
                                     <button onClick={() => {
                                         const n = [...rxData.medications]; n.splice(i, 1); setRxData({ ...rxData, medications: n });
@@ -1705,7 +1797,7 @@ const Atencion = () => {
                     </div>
 
                     {/* Exams */}
-                    <div onClick={(e) => { e.stopPropagation(); setActiveSection('exam'); }} className={`transition-all duration-300 bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col overflow-hidden min-h-0 ${activeSection === 'exam' ? 'flex-[3]' : (activeSection === 'rx' ? 'flex-1' : 'flex-1')}`}>
+                    <div onClick={(e) => { e.stopPropagation(); setActiveSection('exam'); }} className={`transition-all duration-300 bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col overflow-hidden min-h-0 ${activeSection === 'exam' ? 'flex-[4]' : 'flex-none max-h-[40vh]'}`}>
                         <div style={{ padding: '5px' }} className="bg-gray-50 border-b border-gray-100 text-sm font-bold text-purple-700 uppercase flex justify-between items-center gap-2 tracking-wide">
                             <div className="flex items-center gap-2">
                                 <ClipboardList size={18} /> Exámenes
@@ -1718,19 +1810,8 @@ const Atencion = () => {
                         </div>
                         {appointment && (
                             <div style={{ padding: '5px' }} className="border-b border-gray-100 bg-gray-50/30 flex flex-col space-y-4">
-                                <input className="input-field w-full text-base" style={{ marginBottom: '5px' }} placeholder="Tipo de Examen..." value={examData.type} onChange={e => setExamData({ ...examData, type: e.target.value })} />
-
-                                {/* Médico Solicitante Field */}
-                                <input
-                                    className="input-field w-full text-sm"
-                                    style={{ marginBottom: '5px' }}
-                                    placeholder="Médico Solicitante (opcional)..."
-                                    value={examData.doctorName || ''}
-                                    onChange={e => setExamData({ ...examData, doctorName: e.target.value })}
-                                />
-
                                 {/* Date Field for Exams */}
-                                <div className="flex gap-2 items-center" style={{ marginBottom: '5px' }}>
+                                <div className="flex gap-2 items-center" style={{ marginBottom: '5px', marginTop: '5px' }}>
                                     <label className="text-xs font-bold text-gray-500 uppercase whitespace-nowrap">Fecha de Orden:</label>
                                     <input
                                         type="date"
@@ -1771,11 +1852,26 @@ const Atencion = () => {
                                                 <div className={`mt-1 w-5 h-5 flex-shrink-0 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-purple-600 border-purple-600' : 'bg-white border-gray-300'}`}>
                                                     {isSelected && <CheckCircle size={14} />}
                                                 </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="font-bold text-gray-800 break-words">{e.type}</div>
-                                                    {e.reason && <div className="text-xs text-gray-500 italic mt-1 break-words leading-relaxed">{e.reason}</div>}
+                                                <div className="flex-1 min-w-0" style={{ maxWidth: '100%', overflow: 'hidden' }}>
+                                                    <div className="font-bold text-gray-800 break-words truncate">
+                                                        {e.reason ? (e.reason.length > 25 ? e.reason.substring(0, 25) + '...' : e.reason) : 'Orden de Exámenes'}
+                                                    </div>
+                                                    {e.reason && (
+                                                        <div
+                                                            className="text-xs text-gray-500 italic mt-1"
+                                                            style={{
+                                                                display: '-webkit-box',
+                                                                WebkitLineClamp: '4',
+                                                                WebkitBoxOrient: 'vertical',
+                                                                overflow: 'hidden',
+                                                                wordBreak: 'break-word',
+                                                                whiteSpace: 'pre-wrap'
+                                                            }}
+                                                        >
+                                                            {e.reason}
+                                                        </div>
+                                                    )}
                                                     <div className="text-xs text-gray-400 mt-1">
-                                                        {e.doctorName && <div className="font-semibold text-gray-500 mb-0.5">Solicitado por: {e.doctorName}</div>}
                                                         <div>Registro: {new Date(e.createdAt).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
                                                         <div>Orden: {e.examDate ? e.examDate.split('-').reverse().join('/') : '-'}</div>
                                                     </div>
@@ -1825,7 +1921,12 @@ const Atencion = () => {
                                             })}
                                         </div>
 
-                                        <div className="grid grid-cols-3 gap-2 mt-2 px-1" style={{ padding: '5px' }}>
+                                        <div className="grid grid-cols-4 gap-2 mt-2 px-1" style={{ padding: '5px' }}>
+                                            {/* View Button */}
+                                            <button onClick={(ev) => { ev.stopPropagation(); setViewExamModal(e); }} className="flex items-center justify-center gap-1 text-purple-600 bg-purple-50 hover:bg-purple-100 py-1.5 rounded text-xs font-semibold transition-colors" title="Ver Detalles">
+                                                <Eye size={14} /> Ver
+                                            </button>
+
                                             {/* Upload Button */}
                                             <button onClick={(ev) => { ev.stopPropagation(); setUploadExamId(e.id); }} className="flex items-center justify-center gap-1 text-blue-600 bg-blue-50 hover:bg-blue-100 py-1.5 rounded text-xs font-semibold transition-colors" title="Subir Resultados">
                                                 <Upload size={14} /> Subir
@@ -1938,36 +2039,53 @@ const Atencion = () => {
                 </div>
             </Modal>
 
+            {/* View Exam Modal */}
+            <Modal isOpen={!!viewExamModal} onClose={() => setViewExamModal(null)} title="Detalles del Examen">
+                {viewExamModal && (
+                    <div style={{ padding: '1.5rem' }}>
+                        <div style={{ marginBottom: '1.5rem' }}>
+                            <h4 style={{ fontWeight: 'bold', color: '#1d4ed8', fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>Indicación Clínica / Detalles</h4>
+                            <div
+                                style={{
+                                    padding: '12px',
+                                    backgroundColor: '#f9fafb',
+                                    borderRadius: '8px',
+                                    border: '1px solid #e5e7eb',
+                                    fontSize: '1.1rem',
+                                    lineHeight: '1.5',
+                                    color: '#374151',
+                                    whiteSpace: 'pre-wrap',
+                                    maxHeight: '400px',
+                                    overflowY: 'auto'
+                                }}
+                                className="custom-scrollbar"
+                            >
+                                {viewExamModal.reason || 'Sin detalles adicionales.'}
+                            </div>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', fontSize: '0.85rem', color: '#6b7280', padding: '10px', borderTop: '1px solid #f3f4f6' }}>
+                            <div><strong>Registro:</strong> {new Date(viewExamModal.createdAt).toLocaleDateString()}</div>
+                            <div><strong>Fecha Orden:</strong> {viewExamModal.examDate ? viewExamModal.examDate.split('-').reverse().join('/') : '-'}</div>
+                            <div><strong>Estado:</strong> {viewExamModal.status}</div>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+                            <button onClick={() => setViewExamModal(null)} className="btn-secondary">Cerrar</button>
+                        </div>
+                    </div>
+                )}
+            </Modal>
+
             {/* Edit Exam Modal */}
             <Modal isOpen={!!editExam} onClose={(e) => { if (e && e.stopPropagation) e.stopPropagation(); setEditExam(null); setActiveSection('exam'); }} title="Editar Examen">
                 {editExam && (
                     <div style={{ padding: '1.5rem' }}>
                         <div style={{ marginBottom: '1rem' }}>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Tipo de Examen</label>
-                            <input
-                                type="text"
-                                className="input-field w-full"
-                                value={editExam.type}
-                                onChange={e => setEditExam({ ...editExam, type: e.target.value })}
-                            />
-                        </div>
-                        <div style={{ marginBottom: '1rem' }}>
                             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Motivo / Indicación</label>
-                            <input
-                                type="text"
-                                className="input-field w-full"
+                            <textarea
+                                className="input-field w-full text-sm py-2 resize-none h-[120px]"
                                 value={editExam.reason || ''}
                                 onChange={e => setEditExam({ ...editExam, reason: e.target.value })}
-                            />
-                        </div>
-                        <div style={{ marginBottom: '1rem' }}>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Médico Solicitante</label>
-                            <input
-                                type="text"
-                                className="input-field w-full"
-                                value={editExam.doctorName || ''}
-                                onChange={e => setEditExam({ ...editExam, doctorName: e.target.value })}
-                                placeholder="Nombre del médico que solicita el examen..."
+                                placeholder="Describa los detalles del examen..."
                             />
                         </div>
                         <div style={{ marginBottom: '1rem' }}>
