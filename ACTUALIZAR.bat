@@ -4,6 +4,8 @@ echo      ACTUALIZANDO SISTEMA NEURO
 echo ==========================================
 
 echo [1/4] Obteniendo ultimos cambios...
+git restore .
+git clean -fd
 git pull
 if %errorlevel% neq 0 (
     echo Error al descargar cambios. Verifica tu conexion.

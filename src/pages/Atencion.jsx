@@ -527,7 +527,7 @@ const Atencion = () => {
 
                             <div class="content-title">Indicaciones:</div>
                             <div class="patient-info">
-                                <strong><span class="print-label">Paciente:</span></strong> ${pName} (${age} años)<br>
+                                <strong><span class="print-label">Paciente:</span></strong> ${pName}<br>
                                 <strong><span class="print-label">Fecha:</span></strong> ${exDate}
                             </div>
                             
